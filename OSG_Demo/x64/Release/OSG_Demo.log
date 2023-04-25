@@ -1,9 +1,10 @@
-﻿  LonLatRad2Meter.cpp
+﻿  dxt_img.cpp
+  LonLatRad2Meter.cpp
   main.cpp
   正在生成代码
-  10 of 284 functions ( 3.5%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    16 functions had inline decision re-evaluated but remain unchanged
+  3618 of 3656 functions (99.0%) were compiled, the rest were copied from previous compilation.
+    19 functions were new in current compilation
+    12 functions had inline decision re-evaluated but remain unchanged
   已完成代码的生成
-  OSG_Demo.vcxproj -> D:\Program Files (x86)\Microsoft Visual Studio 2015\myprojects\OSG_Demo\x64\Release\OSG_Demo.exe
-  OSG_Demo.vcxproj -> D:\Program Files (x86)\Microsoft Visual Studio 2015\myprojects\OSG_Demo\x64\Release\OSG_Demo.pdb (Full PDB)
+  OSG_Demo.vcxproj -> E:\jing_zhong\OSG_Demo\x64\Release\OSG_Demo.exe
+  OSG_Demo.vcxproj -> E:\jing_zhong\OSG_Demo\x64\Release\OSG_Demo.pdb (Full PDB)
