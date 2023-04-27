@@ -155,13 +155,16 @@
     <ClCompile Include="dxt_img.cpp" />
     <ClCompile Include="LonLatRad2Meter.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="tinyxml2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dxt_img.h" />
+    <ClInclude Include="earcut.hpp" />
     <ClInclude Include="json.hpp" />
     <ClInclude Include="LonLatRad2Meter.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="stb_image_write.h" />
+    <ClInclude Include="tinyxml2.h" />
     <ClInclude Include="tiny_gltf.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

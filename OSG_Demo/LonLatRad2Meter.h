@@ -2,6 +2,13 @@
 	#define LONLATRAD2METER_H
     static const double pi = std::acos(-1);
 
+	struct ModelMetadata
+	{
+		const char* version;
+		const char* SRS;
+		const char* SRSOrigin;
+	};
+
 	struct Transform // 定义变换结构体
 	{
 		double radian_x;

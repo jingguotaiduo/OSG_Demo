@@ -24,6 +24,9 @@
     <ClCompile Include="LonLatRad2Meter.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="tinyxml2.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dxt_img.h">
@@ -42,6 +45,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="json.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="earcut.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="tinyxml2.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

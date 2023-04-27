@@ -12,14 +12,21 @@
 //#include "stb_image_write.h"
 #include "json.hpp"
 #include "tiny_gltf.h" //实测2.5版本可用，2.8版本不可用
+#include "tinyxml2.h"
+
+
 
 using namespace std;
 using namespace tinygltf;
+using namespace tinyxml2;
 
-
+/*
+//https://github.com/mapbox/earcut.hpp
 //https://github.com/nothings/stb single-file public domain (or MIT licensed) libraries for C/C++ By JIAO Jingguo 2023.4.26
 // dlib http://dlib.net/ By JIOA Jingguo 2023.4.26 many libs for C/C++ to invoke
 //https://github.com/syoyo/tinygltf/blob/release/examples/gltfutil/main.cc By JIAO Jingguo 2023.4.26 命令行解析器
+*/
+
 int main()
 {
 	std::cout << "This is JIAO Jingguo's OSG Demo Program(------2023.3.13)!" << std::endl;
@@ -132,7 +139,54 @@ int main()
 		true, // embedBuffers
 		true, // pretty print
 		false); // write binary
+	gltf.WriteGltfSceneToFile(&m, "triangle-bin.gltf",
+		true, // embedImages
+		true, // embedBuffers
+		true, // pretty print
+		true); // write binary
 	cout << "写入gltf文件成功！" << endl;
+
+	cout << "开始解析metadata.xml文件！" << endl;
+	tinyxml2::XMLDocument xml;
+	xml.LoadFile("metadata2.xml");
+
+	XMLElement *modelMetadata = xml.RootElement();
+	XMLElement *SRS = modelMetadata->FirstChildElement("SRS");
+	XMLElement *SRSOrigin = modelMetadata->FirstChildElement("SRSOrigin");
+	const char* SRS_value = SRS->GetText();
+	const char* SRSOrigin_value = SRSOrigin->GetText();
+
+	/* 需要读取metadata.xml文件获取模型基点的经纬度坐标，如果带EPSG则需要根据SRS里的空间参考和SRSOrigin里的三维坐标来进行坐标转换来拿到经纬度*/
+	ModelMetadata mmd;
+	mmd.SRS = SRS_value;
+	mmd.SRSOrigin = SRSOrigin_value;
+	cout << "空间参考："<<SRS_value << endl;
+	cout <<"空间参考原点："<< SRSOrigin_value << endl;
+
+	string srs = mmd.SRS, ENU = "ENU";//可能存在 wkt 或 EPSG
+	
+	if (srs.length() >=3 && srs.substr(0, 3) == ENU)
+	{
+		cout << "The metadata.xml 文件的空间参考是北偏东坐标系！" << endl;
+		string lonlatStr = srs.substr(4, srs.length());
+		float lon = 0;
+		float lat = 0;
+		int index = -1;
+		for (int i = 0; i < lonlatStr.length(); i++)
+		{
+			if (lonlatStr[i] == ',')
+			{
+				index = i; break;
+			}
+		}
+		if (index != -1)
+		{
+			lat = stof(lonlatStr.substr(0, index).c_str());
+			lon = stof(lonlatStr.substr(index + 1, lonlatStr.length()).c_str());
+		}
+		cout << "经度为：" << lon << endl;
+		cout << "纬度为：" << lat << endl;
+	}
 
 	osgViewer::Viewer view;
 	view.addEventHandler(new osgViewer::ScreenCaptureHandler);//截图  快捷键 c
@@ -145,6 +199,7 @@ int main()
 	//view.addEventHandler(pStatsHandler);
 	//view.setSceneData(osgDB::readNodeFile("./cow.osg"));
 	std::string filenameStr = "E:\\科研_work\\Production_3\\Data\\Tile_+000_+000\\Tile_+000_+000.osgb";//"E:\\科研_work\\tile_32_25\\Data\\Model\\tile_0_0_0_tex_children.osgb"
+	filenameStr = "./cow.osg";
 	view.setSceneData(osgDB::readNodeFile(filenameStr));
 	return view.run();
 }
