@@ -1326,6 +1326,8 @@ namespace tinygltf {
 			const std::string &base_dir,
 			unsigned int check_sections = REQUIRE_VERSION);
 
+		//std::string TinyGLTF::Serialize(Model *model); //  By JIAO Jingguo 2023.5.4 参考 https://blog.csdn.net/u010608964/article/details/89219393
+
 		///
 		/// Loads glTF binary asset from a file.
 		/// Set warning message to `warn` for example it fails to load asserts.
@@ -6222,6 +6224,236 @@ namespace tinygltf {
 		return LoadFromString(model, err, warn, str, length, base_dir,
 			check_sections);
 	}
+
+	//std::string TinyGLTF::Serialize(Model *model) {
+
+	//	json output;
+	//	// ACCESSORS
+	//	json accessors;
+	//	for (unsigned int i = 0; i < model->accessors.size(); ++i) {
+	//		json accessor;
+	//		SerializeGltfAccessor(model->accessors[i], accessor);
+	//		accessors.push_back(accessor);
+	//	}
+	//	output["accessors"] = accessors;
+
+	//	// ANIMATIONS
+	//	if (model->animations.size()) {
+	//		json animations;
+	//		for (unsigned int i = 0; i < model->animations.size(); ++i) {
+	//			if (model->animations[i].channels.size()) {
+	//				json animation;
+	//				SerializeGltfAnimation(model->animations[i], animation);
+	//				animations.push_back(animation);
+	//			}
+	//		}
+	//		output["animations"] = animations;
+	//	}
+
+	//	// ASSET
+	//	json asset;
+	//	SerializeGltfAsset(model->asset, asset);
+	//	output["asset"] = asset;
+
+	//	// BUFFERS (We expect only one buffer here)
+	//	json buffers;
+	//	for (unsigned int i = 0; i < model->buffers.size(); ++i) {
+	//		json buffer;
+	//		SerializeNumberProperty("byteLength", model->buffers[i].data.size(), buffer);
+	//		if (model->buffers[i].name.size())
+	//			SerializeStringProperty("name", model->buffers[i].name, buffer);
+	//		buffers.push_back(buffer);
+	//	}
+	//	output["buffers"] = buffers;
+
+	//	// BUFFERVIEWS
+	//	json bufferViews;
+	//	for (unsigned int i = 0; i < model->bufferViews.size(); ++i) {
+	//		json bufferView;
+	//		SerializeGltfBufferView(model->bufferViews[i], bufferView);
+	//		bufferViews.push_back(bufferView);
+	//	}
+	//	output["bufferViews"] = bufferViews;
+
+	//	// Extensions used
+	//	if (model->extensionsUsed.size()) {
+	//		SerializeStringArrayProperty("extensionsUsed", model->extensionsUsed,
+	//			output);
+	//	}
+
+	//	// Extensions required
+	//	if (model->extensionsRequired.size()) {
+	//		SerializeStringArrayProperty("extensionsRequired",
+	//			model->extensionsRequired, output);
+	//	}
+
+	//	// IMAGES
+	//	if (model->images.size()) {
+	//		json images;
+	//		for (unsigned int i = 0; i < model->images.size(); ++i) {
+	//			json image;
+	//			SerializeGltfImage(model->images[i], image);
+	//			images.push_back(image);
+	//		}
+	//		output["images"] = images;
+	//	}
+
+
+	//	// MATERIALS
+	//	if (model->materials.size()) {
+	//		json materials;
+	//		for (unsigned int i = 0; i < model->materials.size(); ++i) {
+	//			json material;
+	//			SerializeGltfMaterial(model->materials[i], material);
+	//			materials.push_back(material);
+	//		}
+	//		output["materials"] = materials;
+	//	}
+
+	//	// SHADER 
+	//	{
+	//		for (auto& shader : model->shaders) {
+	//			json val;
+	//			val["bufferView"] = shader.bufferView;
+	//			val["type"] = shader.type;
+	//			output["shaders"].push_back(val);
+	//		}
+	//	}
+	//	// PROGREAM
+	//	{
+	//		for (auto& prog : model->programs) {
+	//			json val = json::parse(prog.prog_string);
+	//			output["programs"].push_back(val);
+	//		}
+	//	}
+	//	// TECHNICH
+	//	{
+	//		for (auto& tech : model->techniques) {
+	//			json val = json::parse(tech.tech_string);
+	//			output["techniques"].push_back(val);
+	//		}
+	//	}
+	//	// MESHES
+	//	json meshes;
+	//	for (unsigned int i = 0; i < model->meshes.size(); ++i) {
+	//		json mesh;
+	//		SerializeGltfMesh(model->meshes[i], mesh);
+	//		meshes.push_back(mesh);
+	//	}
+	//	output["meshes"] = meshes;
+
+	//	// NODES
+	//	json nodes;
+	//	for (unsigned int i = 0; i < model->nodes.size(); ++i) {
+	//		json node;
+	//		SerializeGltfNode(model->nodes[i], node);
+	//		nodes.push_back(node);
+	//	}
+	//	output["nodes"] = nodes;
+
+	//	// SCENE
+	//	SerializeNumberProperty<int>("scene", model->defaultScene, output);
+
+	//	// SCENES
+	//	json scenes;
+	//	for (unsigned int i = 0; i < model->scenes.size(); ++i) {
+	//		json currentScene;
+	//		SerializeGltfScene(model->scenes[i], currentScene);
+	//		scenes.push_back(currentScene);
+	//	}
+	//	output["scenes"] = scenes;
+
+	//	// SKINS
+	//	if (model->skins.size()) {
+	//		json skins;
+	//		for (unsigned int i = 0; i < model->skins.size(); ++i) {
+	//			json skin;
+	//			SerializeGltfSkin(model->skins[i], skin);
+	//			skins.push_back(skin);
+	//		}
+	//		output["skins"] = skins;
+	//	}
+
+	//	// TEXTURES
+	//	if (model->textures.size()) {
+	//		json textures;
+	//		for (unsigned int i = 0; i < model->textures.size(); ++i) {
+	//			json texture;
+	//			SerializeGltfTexture(model->textures[i], texture);
+	//			textures.push_back(texture);
+	//		}
+	//		output["textures"] = textures;
+	//	}
+
+	//	// SAMPLERS
+	//	if (model->samplers.size()) {
+	//		json samplers;
+	//		for (unsigned int i = 0; i < model->samplers.size(); ++i) {
+	//			json sampler;
+	//			SerializeGltfSampler(model->samplers[i], sampler);
+	//			samplers.push_back(sampler);
+	//		}
+	//		output["samplers"] = samplers;
+	//	}
+
+	//	// CAMERAS
+	//	if (model->cameras.size()) {
+	//		json cameras;
+	//		for (unsigned int i = 0; i < model->cameras.size(); ++i) {
+	//			json camera;
+	//			SerializeGltfCamera(model->cameras[i], camera);
+	//			cameras.push_back(camera);
+	//		}
+	//		output["cameras"] = cameras;
+	//	}
+
+	//	// LIGHTS
+	//	if (model->lights.size()) {
+	//		json lights;
+	//		for (unsigned int i = 0; i < model->lights.size(); ++i) {
+	//			json light;
+	//			SerializeGltfLight(model->lights[i], light);
+	//			lights.push_back(light);
+	//		}
+	//		output["lights"] = lights;
+	//	}
+
+	//	std::string json_out = output.dump();
+	//	while (json_out.size() % 4 != 0) {
+	//		json_out.push_back(0x20);
+	//	}
+	//	std::string bin_out;
+	//	std::string final_buf;
+
+	//	uint32_t json_length = json_out.size();
+	//	uint32_t bin_length = 0;
+
+	//	// we will append mesh\image\shader\.. into BIN
+	//	if (model->buffers.size() > 0) {
+	//		auto& buffer_data = model->buffers[0].data;
+	//		bin_out.append(buffer_data.data(), buffer_data.data() + buffer_data.size());
+	//		while (bin_out.size() % 4 != 0) {
+	//			bin_out.push_back(0x00);
+	//		}
+	//		bin_length = buffer_data.size();
+	//	}
+	//	final_buf += "glTF";
+	//	int version = 2;
+	//	final_buf.append((char*)&version, (char*)&version + 4);
+	//	int total_len = 12 + 16 + json_length + bin_length;
+	//	final_buf.append((char*)&total_len, (char*)&total_len + 4);
+	//	// JSON
+	//	final_buf.append((char*)&json_length, (char*)&json_length + 4);
+	//	final_buf += "JSON";
+	//	final_buf.append(json_out.data(), json_out.data() + json_out.size());
+	//	// BIN
+	//	final_buf.append((char*)&bin_length, (char*)&bin_length + 4);
+	//	final_buf += "BIN";
+	//	final_buf.push_back(0x00);
+	//	final_buf.append(bin_out.data(), bin_out.data() + bin_out.size());
+
+	//	return final_buf;
+	//}
 
 	bool TinyGLTF::LoadASCIIFromFile(Model *model, std::string *err,
 		std::string *warn, const std::string &filename,

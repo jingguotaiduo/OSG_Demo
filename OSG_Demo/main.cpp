@@ -4,6 +4,7 @@
 #include <osgGA/GUIEventAdapter>
 #include <osgViewer/ViewerEventHandlers>
 #include "LonLatRad2Meter.h"
+#include "ogrsf_frmts.h"
 
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
@@ -13,6 +14,8 @@
 #include "json.hpp"
 #include "tiny_gltf.h" //实测2.5版本可用，2.8版本不可用
 #include "tinyxml2.h"
+
+#include "earcut.hpp"
 
 
 
@@ -187,6 +190,43 @@ int main()
 		cout << "经度为：" << lon << endl;
 		cout << "纬度为：" << lat << endl;
 	}
+
+	cout << "Start to Read Shapefile!" << std::endl;
+	GDALAllRegister();
+	GDALDataset   *poDS;
+	CPLSetConfigOption("SHAPE_ENCODING", "");  //解决中文乱码问题
+											   //读取shp文件
+											   //注：GDAL不能读取中文路径，所以记得要换成英文路径
+	poDS = (GDALDataset*)GDALOpenEx("E:/jing_zhong/OSG_Demo/x64/Release/world.shp", GDAL_OF_VECTOR, NULL, NULL, NULL);
+
+	if (poDS == NULL)
+	{
+		printf("Open failed.\n%s");
+		return 0;
+	}
+
+	OGRLayer  *poLayer;
+	poLayer = poDS->GetLayer(0); //读取层
+	OGRFeature *poFeature;
+
+	poLayer->ResetReading();
+	int i = 0;
+	while ((poFeature = poLayer->GetNextFeature()) != NULL)
+	{
+		i = i++;
+		cout << i << "  ";
+		OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
+		int iField;
+		int n = poFDefn->GetFieldCount(); //获得字段的数目，不包括前两个字段（FID,Shape);
+		for (iField = 0; iField <n; iField++)
+		{
+			//输出每个字段的值
+			cout << poFeature->GetFieldAsString(iField) << "    ";
+		}
+		cout << endl;
+		OGRFeature::DestroyFeature(poFeature);
+	}
+	GDALClose(poDS);
 
 	osgViewer::Viewer view;
 	view.addEventHandler(new osgViewer::ScreenCaptureHandler);//截图  快捷键 c
