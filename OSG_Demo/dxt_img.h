@@ -1,5 +1,7 @@
+#include <vector>
+#include <osg/Image>
+using namespace std;
 #ifndef DXT_IMG_H
 	#define DXT_IMG_H
-	#include "dxt_img.cpp"
 	void fill_4BitImage(std::vector<unsigned char>& jpeg_buf, osg::Image* img, int& width, int& height);
 #endif

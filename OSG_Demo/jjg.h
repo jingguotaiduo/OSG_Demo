@@ -1,5 +1,5 @@
-#ifndef LONLATRAD2METER_H
-	#define LONLATRAD2METER_H
+#ifndef JJG_H
+	#define JJG_H
     static const double pi = std::acos(-1);
 
 	struct ModelMetadata

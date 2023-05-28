@@ -1,6 +1,4 @@
-#include <vector>
-#include <osg/Image>
-using namespace std;
+#include "dxt_Img.h"
 
 struct Color //定义一个颜色结构体，包含红、绿、蓝三种颜色
 {

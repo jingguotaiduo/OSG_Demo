@@ -30,14 +30,11 @@ e:\jing_zhong\osg_demo\osg_demo\gdal\gdal_priv.h(1144): warning C4251: “GDALDr
               _Ty=GDALDriver *
           ]
   main.cpp
-e:\jing_zhong\osg_demo\osg_demo\tiny_gltf.h(927): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
-main.cpp(418): warning C4473: “printf”: 没有为格式字符串传递足够的参数
-  main.cpp(418): note: 占位符和其参数预计 1 可变参数，但提供的却是 0 参数
-  main.cpp(418): note: 缺失的可变参数 1 为格式字符串“%s”所需
+e:\jing_zhong\osg_demo\osg_demo\tiny_gltf.h(921): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
   tinyxml2.cpp
     正在创建库 E:\jing_zhong\OSG_Demo\x64\Release\OSG_Demo.lib 和对象 E:\jing_zhong\OSG_Demo\x64\Release\OSG_Demo.exp
   正在生成代码
-  All 1699 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  All 5360 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   已完成代码的生成
   OSG_Demo.vcxproj -> E:\jing_zhong\OSG_Demo\x64\Release\OSG_Demo.exe
   OSG_Demo.vcxproj -> E:\jing_zhong\OSG_Demo\x64\Release\OSG_Demo.pdb (Full PDB)

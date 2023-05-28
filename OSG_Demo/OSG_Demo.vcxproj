@@ -82,8 +82,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>E:\jing_zhong\osg-install\include;./gdal;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\jing_zhong\osg-install\lib;./lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>E:\jing_zhong\osg-install\include;E:\jing_zhong\OSG_Demo\OSG_Demo;E:\jing_zhong\OSG_Demo\OSG_Demo\osg;./gdal;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\jing_zhong\osg-install\lib;E:\jing_zhong\OSG_Demo\OSG_Demo\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -148,7 +148,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>gdal_i.lib;OpenThreads.lib;OpenThreadsd.lib;osg.lib;osgAnimation.lib;osgAnimationd.lib;osgd.lib;osgDB.lib;osgDBd.lib;osgFX.lib;osgFXd.lib;osgGA.lib;osgGAd.lib;osgManipulator.lib;osgManipulatord.lib;osgParticle.lib;osgParticled.lib;osgPresentation.lib;osgPresentationd.lib;osgShadow.lib;osgShadowd.lib;osgSim.lib;osgSimd.lib;osgTerrain.lib;osgTerraind.lib;osgText.lib;osgTextd.lib;osgUI.lib;osgUId.lib;osgUtil.lib;osgUtild.lib;osgViewer.lib;osgViewerd.lib;osgVolume.lib;osgVolumed.lib;osgWidget.lib;osgWidgetd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>gdal_i.lib;OpenThreads.lib;osg.lib;osgAnimation.lib;osgDB.lib;osgFX.lib;osgGA.lib;osgManipulator.lib;osgParticle.lib;osgPresentation.lib;osgShadow.lib;osgSim.lib;osgTerrain.lib;osgText.lib;osgUI.lib;osgUtil.lib;osgViewer.lib;osgVolume.lib;osgWidget.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
