@@ -5,7 +5,7 @@ e:\jing_zhong\osg_demo\osg_demo\tiny_gltf.h(927): warning C4819: 该文件包含
   tinyxml2.cpp
     正在创建库 E:\jing_zhong\OSG_Demo\x64\Release\OSG_Demo.lib 和对象 E:\jing_zhong\OSG_Demo\x64\Release\OSG_Demo.exp
   正在生成代码
-  All 1590 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  All 1624 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   已完成代码的生成
   OSG_Demo.vcxproj -> E:\jing_zhong\OSG_Demo\x64\Release\OSG_Demo.exe
   OSG_Demo.vcxproj -> E:\jing_zhong\OSG_Demo\x64\Release\OSG_Demo.pdb (Full PDB)

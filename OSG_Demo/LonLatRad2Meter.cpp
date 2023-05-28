@@ -4,6 +4,7 @@
 #include <direct.h>
 #include <string>
 #include "LonLatRad2Meter.h"
+#include "json.hpp"
 using namespace std;
 
 bool mkdirs(const char* path)

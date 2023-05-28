@@ -178,6 +178,15 @@ string& replace_all_distinct(string& str, const string& old_value, const string&
 	return str;
 }
 
+void singleOSGB2singleB3DM(double center_x, double center_y, string inputOSGB, string outputB3DM) // By JIAO Jingguo 2023.5.22
+{
+	double rad_x = degree2rad(center_x);
+	double rad_y = degree2rad(center_y);
+	int max_lvl = 20;//100
+
+}
+
+
 // By JIAO Jingguo 2023.5.21 parse metadata.xml and get all files and create all same directories as origin
 int main()
 {
@@ -302,7 +311,7 @@ int main()
 	cout << "开始解析metadata.xml文件！" << endl;
 	tinyxml2::XMLDocument xml;
 
-	string mXMLFileName = "E:\\科研_work\\Production_3\\metadata.xml";//"metadata2.xml"
+	string mXMLFileName = "E:\\KY_work\\Production_3\\metadata.xml";//"metadata2.xml"
 	xml.LoadFile(mXMLFileName.c_str());
 
 	XMLElement *modelMetadata = xml.RootElement();
@@ -363,8 +372,9 @@ int main()
 	//	 << "后缀名为：" << fileName_withSuffix << endl;
 
 	string dataDirectory = filePath + "Data", fileType = ".osgb", newFileType = ".b3dm";
-	string newDir = "E:\\科研_work\\Production_3-jjgConvert3dtiles";
+	string newDir = "E:\\KY_work\\Production_3-jjgConvert3dtiles";
 	cout << "OSG数据目录为：" << dataDirectory << endl;
+	vector<string> osgbfiles;
 	if (isDirExist(dataDirectory))
 	{
 		cout << "OSG数据目录" << dataDirectory <<"存在！"<< endl;
@@ -373,14 +383,16 @@ int main()
 
 		for (int i = 0; i < temp.size();++i	)
 		{
+			string tempStr = temp[i];
 			string replaceNewDataFileName = replace_all_distinct(temp[i], dataDirectory, newDir + "\\Data");
 			//cout << replaceNewDataFileName << endl;
 
 			string::size_type dotPos = replaceNewDataFileName.find_last_of('.') + 1;
 			if (dotPos && replaceNewDataFileName.substr(dotPos - 1, replaceNewDataFileName.length() - fileType.length()) == fileType) //如果后缀名为.osgb
 			{
+				osgbfiles.push_back(tempStr);
 				string newFilename = replace_all_distinct(replaceNewDataFileName, fileType, newFileType);
-				cout << newFilename << endl;
+				cout << tempStr << " ----> " <<newFilename << endl;
 			}
 			else //如果是文件夹，则创建新目录
 			{
@@ -395,8 +407,8 @@ int main()
 	
 	
 
-	system("pause");
-	return 0;
+	//system("pause");
+	//return 0;
 
 	//cout << "Start to Read Shapefile!" << std::endl;
 	//GDALAllRegister();
@@ -435,18 +447,30 @@ int main()
 	//}
 	//GDALClose(poDS);
 
-	//osgViewer::Viewer view;
-	//view.addEventHandler(new osgViewer::ScreenCaptureHandler);//截图  快捷键 c
-	//view.addEventHandler(new osgViewer::WindowSizeHandler);//全屏  快捷键f
-	////方法一
-	//view.addEventHandler(new osgViewer::StatsHandler);//查看帧数 s
-	////方法二
-	////osgViewer::StatsHandler* pStatsHandler = new osgViewer::StatsHandler;
-	////pStatsHandler->setKeyEventTogglesOnScreenStats(osgGA::GUIEventAdapter::KEY_F11);
-	////view.addEventHandler(pStatsHandler);
-	////view.setSceneData(osgDB::readNodeFile("./cow.osg"));
-	//std::string filenameStr = "E:\\科研_work\\Production_3\\Data\\Tile_+000_+000\\Tile_+000_+000.osgb";//"E:\\科研_work\\tile_32_25\\Data\\Model\\tile_0_0_0_tex_children.osgb"
-	//filenameStr = "./cow.osg";
-	//view.setSceneData(osgDB::readNodeFile(filenameStr));
-	//return view.run();
+	osgViewer::Viewer view;
+	view.addEventHandler(new osgViewer::ScreenCaptureHandler);//截图  快捷键 c
+	view.addEventHandler(new osgViewer::WindowSizeHandler);//全屏  快捷键f
+	//方法一
+	view.addEventHandler(new osgViewer::StatsHandler);//查看帧数 s
+	//方法二
+	//osgViewer::StatsHandler* pStatsHandler = new osgViewer::StatsHandler;
+	//pStatsHandler->setKeyEventTogglesOnScreenStats(osgGA::GUIEventAdapter::KEY_F11);
+	//view.addEventHandler(pStatsHandler);
+	//view.setSceneData(osgDB::readNodeFile("./cow.osg"));
+	std::string filenameStr = "E:\\KY_work\\Production_3\\Data\\Tile_+000_+000\\Tile_+000_+000.osgb";//"E:\\科研_work\\tile_32_25\\Data\\Model\\tile_0_0_0_tex_children.osgb"
+	filenameStr = "./cow.osg";
+	view.setSceneData(osgDB::readNodeFile(filenameStr));
+
+	//vector<string> tempData;
+	//string tempDataDirectory = "E:\\科研_work\\tile_32_25\\Data\\Model";// "E:\\KY_work\\Production_3\\Data\\Tile_+000_+000";
+	//getAllFiles(tempDataDirectory, tempData, fileType);
+	//
+	//if (osgbfiles.size() > 0)
+	//{
+	//	cout << osgbfiles.size() << endl;
+	//	osg::ref_ptr<osg::Node> root = osgDB::readNodeFiles(osgbfiles);
+	//	view.setSceneData(root);
+	//}
+	
+	return view.run();
 }
