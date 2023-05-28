@@ -21,18 +21,15 @@
     <ClCompile Include="dxt_img.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="LonLatRad2Meter.cpp">
+    <ClCompile Include="tinyxml2.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="tinyxml2.cpp">
+    <ClCompile Include="jjg.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dxt_img.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="LonLatRad2Meter.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="stb_image.h">
@@ -51,6 +48,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="tinyxml2.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="jjg.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

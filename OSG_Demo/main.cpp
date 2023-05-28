@@ -1,15 +1,10 @@
-﻿#include <windows.h>
-#include <direct.h>
-#include <io.h>
-#include <list>
-#include <vector>
-#include <iostream>
+﻿#include <iostream>
 
 #include <osgViewer/Viewer>
 #include <osgDB/ReadFile>
 #include <osgGA/GUIEventAdapter>
 #include <osgViewer/ViewerEventHandlers>
-#include "LonLatRad2Meter.h"
+#include "jjg.h"
 #include "ogrsf_frmts.h"
 
 #define TINYGLTF_IMPLEMENTATION
@@ -20,9 +15,7 @@
 #include "json.hpp"
 #include "tiny_gltf.h" //实测2.5版本可用，2.8版本不可用
 #include "tinyxml2.h"
-
 #include "earcut.hpp"
-
 
 
 using namespace std;
@@ -35,6 +28,15 @@ using namespace tinyxml2;
 // dlib http://dlib.net/ By JIAO Jingguo 2023.4.26 many libs for C/C++ to invoke
 //https://github.com/syoyo/tinygltf/blob/release/examples/gltfutil/main.cc By JIAO Jingguo 2023.4.26 命令行解析器
 */
+
+#include <windows.h>
+#include <direct.h>
+#include <io.h>
+#include <string>
+#include <list>
+#include <vector>
+
+using namespace std;
 
 double stringToDouble(string num) //字符串转小数的函数 2023.5.21
 {
@@ -97,13 +99,12 @@ bool isDirExist(string filename)
 long singleFolderfileSize = 0;
 void getAllFiles(string path, vector<string>& files, string fileType)
 {
-	
 	long long hFile = 0;//文件句柄
 	struct _finddata_t fileinfo;//文件信息
 	string p;
 	if ((hFile = _findfirst(p.assign(path).append("\\*").c_str(), &fileinfo)) != -1)
 	{
-		do{
+		do {
 			if ((fileinfo.attrib & _A_SUBDIR))
 			{  //比较文件类型是否是文件夹
 				if (strcmp(fileinfo.name, ".") != 0 && strcmp(fileinfo.name, "..") != 0)
@@ -168,7 +169,7 @@ void CreateMultiLevel(string dir)//创建多级目录
 	}
 }
 
-string& replace_all_distinct(string& str, const string& old_value, const string& new_value)
+string &replace_all_distinct(string& str, const string& old_value, const string& new_value)
 {
 	for (string::size_type pos(0); pos != string::npos; pos += new_value.length()) {
 		if ((pos = str.find(old_value, pos)) != string::npos)
@@ -177,7 +178,6 @@ string& replace_all_distinct(string& str, const string& old_value, const string&
 	}
 	return str;
 }
-
 void singleOSGB2singleB3DM(double center_x, double center_y, string inputOSGB, string outputB3DM) // By JIAO Jingguo 2023.5.22
 {
 	double rad_x = degree2rad(center_x);
@@ -186,22 +186,20 @@ void singleOSGB2singleB3DM(double center_x, double center_y, string inputOSGB, s
 
 }
 
-
+//std::vector<unsigned char> jpeg_buf;
+//jpeg_buf.reserve(512 * 512 * 3);
+//for(int i=0;i<jpeg_buf.size();i++)
+//	std::cout << jpeg_buf[i];
+//std::cout << std::endl;
 // By JIAO Jingguo 2023.5.21 parse metadata.xml and get all files and create all same directories as origin
 int main()
 {
 	std::cout << "This is JIAO Jingguo's OSG Demo Program(------2023.3.13)!" << std::endl;
-	//std::vector<unsigned char> jpeg_buf;
-	//jpeg_buf.reserve(512 * 512 * 3);
-	//for(int i=0;i<jpeg_buf.size();i++)
-	//	std::cout << jpeg_buf[i];
-	//std::cout << std::endl;
-
-	//double lon = 117.0, lat = 39.0, tile_w = 250, tile_h = 250, height_min = 0, height_max = 100, geometricError = 50;
-	//double rad_lon = degree2rad(lon), rad_lat = degree2rad(lat);
-	//string full_path = "D:\\Program Files (x86)\\Microsoft Visual Studio 2015\\myprojects\\OSG_Demo\\OSG_Demo\\tileset-First.json";
-	//const char* filename = "./tile+01_05/01_05.b3dm";
-	//write_tileset(rad_lon, rad_lat, tile_w, tile_h, height_min, height_max, geometricError, filename,full_path.data());
+	double lon = 117.0, lat = 39.0, tile_w = 250, tile_h = 250, height_min = 0, height_max = 100, geometricError = 50;
+	double rad_lon = degree2rad(lon), rad_lat = degree2rad(lat);
+	string full_path = "./tileset-First.json";
+	const char* filename = "./tile+01_05/01_05.b3dm";
+	write_tileset(rad_lon, rad_lat, tile_w, tile_h, height_min, height_max, geometricError, filename,full_path.data());
 
 
 	//// By JIAO Jingguo 2023.4.26 测试写入gltf
@@ -407,45 +405,49 @@ int main()
 	
 	
 
-	//system("pause");
-	//return 0;
+	cout << "Start to Read Shapefile!" << std::endl;
+	GDALAllRegister();
+	GDALDataset   *poDS;
+	CPLSetConfigOption("SHAPE_ENCODING", "");  //解决中文乱码问题
+											   //读取shp文件
+											   //注：GDAL不能读取中文路径，所以记得要换成英文路径
+	poDS = (GDALDataset*)GDALOpenEx("../x64/Release/world.shp", GDAL_OF_VECTOR, NULL, NULL, NULL);
 
-	//cout << "Start to Read Shapefile!" << std::endl;
-	//GDALAllRegister();
-	//GDALDataset   *poDS;
-	//CPLSetConfigOption("SHAPE_ENCODING", "");  //解决中文乱码问题
-	//										   //读取shp文件
-	//										   //注：GDAL不能读取中文路径，所以记得要换成英文路径
-	//poDS = (GDALDataset*)GDALOpenEx("E:/jing_zhong/OSG_Demo/x64/Release/world.shp", GDAL_OF_VECTOR, NULL, NULL, NULL);
+	if (poDS == NULL)
+	{
+		printf("Open failed.\n%s");
+		return 0;
+	}
 
-	//if (poDS == NULL)
-	//{
-	//	printf("Open failed.\n%s");
-	//	return 0;
-	//}
+	OGRLayer  *poLayer;
+	poLayer = poDS->GetLayer(0); //读取层
+	OGRFeature *poFeature;
 
-	//OGRLayer  *poLayer;
-	//poLayer = poDS->GetLayer(0); //读取层
-	//OGRFeature *poFeature;
+	poLayer->ResetReading();
+	int i = 0;
+	while ((poFeature = poLayer->GetNextFeature()) != NULL)
+	{
+		i = i++;
+		cout << i << "  ";
+		OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
+		int iField;
+		int n = poFDefn->GetFieldCount(); //获得字段的数目，不包括前两个字段（FID,Shape);
+		for (iField = 0; iField <n; iField++)
+		{
+			//输出每个字段的值
+			cout << poFeature->GetFieldAsString(iField) << "    ";
+		}
+		cout << endl;
+		OGRFeature::DestroyFeature(poFeature);
+	}
+	GDALClose(poDS);
 
-	//poLayer->ResetReading();
-	//int i = 0;
-	//while ((poFeature = poLayer->GetNextFeature()) != NULL)
-	//{
-	//	i = i++;
-	//	cout << i << "  ";
-	//	OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
-	//	int iField;
-	//	int n = poFDefn->GetFieldCount(); //获得字段的数目，不包括前两个字段（FID,Shape);
-	//	for (iField = 0; iField <n; iField++)
-	//	{
-	//		//输出每个字段的值
-	//		cout << poFeature->GetFieldAsString(iField) << "    ";
-	//	}
-	//	cout << endl;
-	//	OGRFeature::DestroyFeature(poFeature);
-	//}
-	//GDALClose(poDS);
+	double* val = new double[2];
+	*val = 117;
+	*(val + 1) = 39;
+	epsg_convert(4326, val, "E:\\jing_zhong\\OSG_Demo\\x64\\Release\\gdal_data");
+	cout << *(val) << endl;
+	cout << *(val + 1) << endl;
 
 	osgViewer::Viewer view;
 	view.addEventHandler(new osgViewer::ScreenCaptureHandler);//截图  快捷键 c
@@ -473,4 +475,6 @@ int main()
 	//}
 	
 	return view.run();
+	//system("pause");
+	//return 0;
 }
