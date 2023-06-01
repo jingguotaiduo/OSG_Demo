@@ -36,6 +36,10 @@ using namespace std;
 #include "tinyxml2.h"
 #include "earcut.hpp"
 
+// By JIAO Jingguo 2023.6.1
+#include <OSGBPageLodVisitor.h>
+#include "b3dm2gltf.cpp"
+//E:\jing_zhong\osg-install\lib; E:\jing_zhong\osg-install\include;
 
 using namespace std;
 using namespace tinygltf;
@@ -739,10 +743,20 @@ bool osgb2glb_buf(std::string path, std::string& glb_buff, MeshInfo& mesh_info) 
 	if (!root.valid()) {
 		return false;
 	}
-	InfoVisitor infoVisitor(parent_path);
+
+	OSGBPageLodVisitor infoVisitor(parent_path);//"E:\\jing_zhong\\3dtiles\\data\\test"
 	root->accept(infoVisitor);
-	if (infoVisitor.geometry_array.empty())
+	if (infoVisitor.geometryArray.empty()) {
+		std::cout << "empty geometry in osgb file" << std::endl;
 		return false;
+	}
+
+	std::cout << infoVisitor.geometryArray.size() << std::endl;
+
+	//InfoVisitor infoVisitor(parent_path);
+	//root->accept(infoVisitor);
+	//if (infoVisitor.geometry_array.empty())
+	//	return false;
 
 	osgUtil::SmoothingVisitor sv;
 	root->accept(sv);
@@ -758,22 +772,23 @@ bool osgb2glb_buf(std::string path, std::string& glb_buff, MeshInfo& mesh_info) 
 	// mesh
 	model.meshes.resize(1);
 	int primitive_idx = 0;
-	for (auto g : infoVisitor.geometry_array)
+	for (int ij=0;ij<infoVisitor.geometryArray.size();ij++)
 	{
+		auto g = infoVisitor.geometryArray[ij];
 		if (!g->getVertexArray() || g->getVertexArray()->getDataSize() == 0)
 			continue;
 
 		write_osgGeometry(g, &osgState);
 		// update primitive material index
-		if (infoVisitor.texture_array.size())
+		if (infoVisitor.textureArray.size())
 		{
 			for (unsigned int k = 0; k < g->getNumPrimitiveSets(); k++)
 			{
-				auto tex = infoVisitor.texture_map[g];
+				auto tex = infoVisitor.textureMap[g];
 				// if hava texture
 				if (tex)
 				{
-					for (auto texture : infoVisitor.texture_array)
+					for (auto texture : infoVisitor.textureArray)
 					{
 						model.meshes[0].primitives[primitive_idx].material++;
 						if (tex == texture)
@@ -800,7 +815,7 @@ bool osgb2glb_buf(std::string path, std::string& glb_buff, MeshInfo& mesh_info) 
 	};
 	// image
 	{
-		for (auto tex : infoVisitor.texture_array)
+		for (auto tex : infoVisitor.textureArray)
 		{
 			unsigned buffer_start = buffer.data.size();
 			std::vector<unsigned char> jpeg_buf;
@@ -881,7 +896,7 @@ bool osgb2glb_buf(std::string path, std::string& glb_buff, MeshInfo& mesh_info) 
 	// use KHR_materials_unlit
 	model.extensionsRequired = { "KHR_materials_unlit" };
 	model.extensionsUsed = { "KHR_materials_unlit" };
-	for (int i = 0; i < infoVisitor.texture_array.size(); i++)
+	for (int i = 0; i < infoVisitor.textureArray.size(); i++)
 	{
 		tinygltf::Material mat = make_color_material_osgb(1.0, 1.0, 1.0);
 		mat.b_unlit = true; // use KHR_materials_unlit
@@ -896,7 +911,7 @@ bool osgb2glb_buf(std::string path, std::string& glb_buff, MeshInfo& mesh_info) 
 	// texture
 	{
 		int texture_index = 0;
-		for (auto tex : infoVisitor.texture_array)
+		for (auto tex : infoVisitor.textureArray)
 		{
 			tinygltf::Texture texture;
 			texture.source = texture_index++;
@@ -1145,6 +1160,162 @@ void* osgb23dtile_path(const char* in_path, const char* out_path,
 	return str;
 }
 
+
+// convert gltf to glb file
+int gltfToGlb(std::string input, std::string output)
+{
+	tinygltf::Model model;
+	tinygltf::TinyGLTF gltf;
+	std::string error, warning;
+	if (!gltf.LoadASCIIFromFile(&model, &error, &warning, input))
+	{
+		printf("load gltf failed: %s\n", error.c_str());
+		return 1;
+	}
+	if (!gltf.WriteGltfSceneToFile(&model, output, true, true, false, true))
+	{
+		printf("write glb failed: %s\n", output.c_str());
+		return 1;
+	}
+	return 0;
+}
+
+// read all into buffer from input file
+char* readFileBuffer(std::string input, long& fsize)
+{
+	FILE* f = fopen(input.c_str(), "rb");
+	if (!f)
+	{
+		printf("can`t open file: %s\n", input.c_str());
+		return NULL;
+	}
+	fseek(f, 0, SEEK_END);
+	fsize = ftell(f);
+	fseek(f, 0, SEEK_SET);
+	char * buffer = new char[fsize + 1];
+	if (fsize != fread(buffer, 1, fsize, f))
+	{
+		printf("read file %s error\n", input.c_str());
+		fclose(f);
+		delete[]buffer;
+		return NULL;
+	}
+	buffer[fsize] = 0;
+	fclose(f);
+	return buffer;
+}
+
+// convert glb to b3dm
+int glbToB3dm(std::string input, std::string output)
+{
+	long fsize = 0;
+	char * buffer = readFileBuffer(input, fsize);
+	if (!buffer)
+		return 1;
+	int b3dmLen = fsize + 28;
+	char * b3dmBuffer = new char[b3dmLen];
+	memset(b3dmBuffer, 0, 28);
+	memcpy(b3dmBuffer, "b3dm", 4);
+	*(int*)(b3dmBuffer + 4) = 1;
+	*(int*)(b3dmBuffer + 8) = b3dmLen;
+	memcpy(b3dmBuffer + 28, buffer, fsize);
+	delete buffer;
+	FILE* f1 = fopen(output.c_str(), "wb");
+	if (!f1)
+	{
+		printf("can`t open file: %s\n", output.c_str());
+		return 1;
+	}
+	if (b3dmLen != fwrite(b3dmBuffer, 1, b3dmLen, f1))
+	{
+		printf("write file %s error\n", input.c_str());
+		return 1;
+	}
+	fclose(f1);
+	delete[]b3dmBuffer;
+	return 0;
+}
+
+// convert string to lower format
+std::string toLower(std::string str)
+{
+	for (auto & c : str)
+		c = std::tolower(c);
+	return str;
+}
+
+// convert glb to gltf json + image + bin
+int glbToGltf(std::string input, std::string output)
+{
+	tinygltf::FsCallbacks fs = {
+		&tinygltf::FileExists, &tinygltf::ExpandFilePath,
+		&tinygltf::ReadWholeFile, &tinygltf::WriteWholeFile,
+		nullptr
+	};
+	tinygltf::Model model;
+	tinygltf::TinyGLTF gltf;
+	std::string error, warning;
+	gltf.SetImageWriter(tinygltf::WriteImageData, &fs);
+	if (!gltf.LoadBinaryFromFile(&model, &error, &warning, input))
+	{
+		printf("load glb failed: %s \n", input.c_str());
+		printf("error: %s\n", error.c_str());
+		return 1;
+	}
+	std::string filename = output.substr(output.find_last_of('/') + 1);
+	int img_idx = 0;
+	for (auto & image : model.images)
+	{
+		if (image.name.empty())
+			image.name = filename + "._" + std::to_string(img_idx++);
+		// only support jpg/png now
+		std::string format = ".jpg";
+		if (!image.mimeType.empty())
+		{
+			if (toLower(image.mimeType).find("png") != std::string::npos)
+				format = ".png";
+		}
+		if (image.uri.empty())
+			image.uri = "./" + image.name + format;
+	}
+	if (!gltf.WriteGltfSceneToFile(&model, output, false, false, true, false))
+	{
+		printf("write gltf failed: %s \n", output.c_str());
+		printf("error: %s\n", error.c_str());
+		return 1;
+	}
+	return 0;
+}
+
+// convert b3dm to glb
+int b3dmToGlb(std::string input, std::string output)
+{
+	long fsize = 0;
+	char * buffer = readFileBuffer(input, fsize);
+	if (!buffer)
+		return 1;
+	FILE* f1 = fopen(output.c_str(), "wb");
+	if (!f1)
+	{
+		printf("can`t open file: %s\n", output.c_str());
+		return 1;
+	}
+	int glb_offset = 28 /* magic + version + byteLen */
+		+ *(int*)(buffer + 12) /* feature json len */
+		+ *(int*)(buffer + 16) /* feature binary len */
+		+ *(int*)(buffer + 20) /* batch json len */
+		+ *(int*)(buffer + 24); /* batch binary len */
+	int glb_len = fsize - glb_offset;
+	if (glb_len != fwrite(buffer + glb_offset, 1, glb_len, f1))
+	{
+		printf("write file %s error\n", input.c_str());
+		return 1;
+	}
+	fclose(f1);
+	delete buffer;
+	return 0;
+}
+
 //std::vector<unsigned char> jpeg_buf;
 //jpeg_buf.reserve(512 * 512 * 3);
 //for(int i=0;i<jpeg_buf.size();i++)
@@ -1156,6 +1327,8 @@ int main()
 	const clock_t begin_time = clock();
 	std::cout << "This is JIAO Jingguo's OSG Demo Program(------2023.5.28)!" << std::endl;
 	string inputFolder = "E:\\KY_work\\Production_3", outputDir = "E:\\KY_work\\Production_3-JJG";
+	inputFolder = "E:\\KY_work\\Production_3_tiles3d"; outputDir = "E:\\KY_work\\Production_3-GLB";
+	inputFolder = "E:\\KY_work\\Production_3-GLB"; outputDir = "E:\\KY_work\\Production_3-GLTF";
 	if (!isDirExist(inputFolder)) return 0;
 	/*
 	  第一步，传入输入数据目录、解析metadata.xml文件，拿到ENU/EPSG后获取中心经度和中心纬度；
@@ -1224,6 +1397,7 @@ int main()
 	*/
 	std::cout << "第三步：判断输入目录下是否存在Data文件夹，如果存在，则对输出数据目录创建与输入数据目录同样的文件夹结构！" << endl;
 	string dataDirectory = filePath + "Data", fileType = ".osgb", newFileType = ".b3dm";
+	fileType = ".glb", newFileType = ".gltf";
 	vector<OsgbInfo> osgb_dir_pair;
 	if (!isDirExist(dataDirectory))
 	{
@@ -1297,13 +1471,35 @@ int main()
 			std::cout << "第"<<i << "个转换failed!" << endl;
 		else*/
 		std::cout << osgb_dir_pair[i].in_dir.c_str()<< " ----> " << osgb_dir_pair[i].out_dir.c_str()<< endl;
-		bool res = osgb2glb(osgb_dir_pair[i].in_dir.c_str(), osgb_dir_pair[i].out_dir.c_str());
+		//bool res = osgb2glb(osgb_dir_pair[i].in_dir.c_str(), osgb_dir_pair[i].out_dir.c_str());
+		//b3dmToGlb(osgb_dir_pair[i].in_dir, osgb_dir_pair[i].out_dir);
+
+		glbToGltf(osgb_dir_pair[i].in_dir, osgb_dir_pair[i].out_dir);
 	}
 	
 	float seconds = float(clock() - begin_time) / 1000;    //最小精度到ms
 	std::cout << "task over, cost " << seconds << "s" << endl;
 
-	
+
+	//std::string nodeFileName = "E:\\jing_zhong\\OSG_Demo\\x64\\Release\\cow.osg";// "E:\\jing_zhong\\3dtiles\\data\\test\\test.osgb";
+	//osg::ref_ptr<osg::Node> root = osgDB::readNodeFile(nodeFileName);
+	//if (!root.valid()) {
+	//	std::cout << "fail read osgb file" << std::endl;
+	//	return false;
+	//}
+
+	//OSGBPageLodVisitor lodVisitor("E:\\jing_zhong\\OSG_Demo\\x64\\Release");//"E:\\jing_zhong\\3dtiles\\data\\test"
+	//root->accept(lodVisitor);
+	//if (lodVisitor.geometryArray.empty()) {
+	//	std::cout << "empty geometry in osgb file" << std::endl;
+	//	return false;
+	//}
+
+	//std::cout << lodVisitor.geometryArray.size() << std::endl;
+
+	//osgUtil::SmoothingVisitor sv;
+	//root->accept(sv);
+
 	/*double lon = 117.0, lat = 39.0, tile_w = 250, tile_h = 250, height_min = 0, height_max = 100, geometricError = 50;
 	double rad_lon = degree2rad(lon), rad_lat = degree2rad(lat);
 	string full_path = "./tileset-First.json";
@@ -1311,8 +1507,8 @@ int main()
 	write_tileset(rad_lon, rad_lat, tile_w, tile_h, height_min, height_max, geometricError, filename,full_path.data());*/
 
 
-	//// By JIAO Jingguo 2023.4.26 测试写入gltf
-	//// Create a model with a single mesh and save it as a gltf file
+	// By JIAO Jingguo 2023.4.26 测试写入gltf
+	// Create a model with a single mesh and save it as a gltf file
 	//tinygltf::Model m;
 	//tinygltf::Scene scene;
 	//tinygltf::Mesh mesh;
@@ -1415,8 +1611,24 @@ int main()
 	//	true); // write binary
 	//cout << "写入gltf文件成功！" << endl;
 
-	
+	//
+	//gltfToGlb("triangle.gltf", "triangle-binary.glb");
+	//cout << "gltf文件已经转换为glb文件成功！" << endl;
 
+	//glbToB3dm("triangle-binary.glb", "triangle.b3dm");
+	//cout << "glb文件已经转换为b3dm文件成功！" << endl;
+
+	//glbToGltf("triangle-binary.glb", "triangle-1.gltf");
+	//cout << "glb文件已经转换为gltf文件成功！" << endl;
+
+	//b3dmToGlb("triangle.b3dm", "triangle-b3dm2glb.glb");
+	//cout << "b3dm文件已经转换为glb文件成功！" << endl;
+
+	//b3dmToGlb("Tile_+000_+000.b3dm", "Tile_+000_+000.b3dm.glb");
+	//cout << "b3dm文件已经转换为glb文件成功！" << endl;
+
+	//glbToGltf("Tile_+000_+000.b3dm.glb", "Tile_+000_+000.b3dm.gltf");
+	//cout << "glb文件已经转换为gltf文件成功！" << endl;
 	
 	
 	
@@ -1475,8 +1687,8 @@ int main()
 	//pStatsHandler->setKeyEventTogglesOnScreenStats(osgGA::GUIEventAdapter::KEY_F11);
 	//view.addEventHandler(pStatsHandler);
 	//view.setSceneData(osgDB::readNodeFile("./cow.osg"));
-	std::string filenameStr = "E:\\KY_work\\Production_3\\Data\\Tile_+000_+000\\Tile_+000_+000.osgb";//"E:\\科研_work\\tile_32_25\\Data\\Model\\tile_0_0_0_tex_children.osgb"
-	//filenameStr = "./cow.osg";
+	std::string filenameStr = "E:\\KY_work\\tile_32_25\\Data\\Model\\Model.osgb";//"E:\\KY_work\\Production_3\\Data\\Tile_+000_+000\\Tile_+000_+000.osgb"
+	filenameStr = "./cow.osg";
 	view.setSceneData(osgDB::readNodeFile(filenameStr));
 
 	//vector<string> tempData;

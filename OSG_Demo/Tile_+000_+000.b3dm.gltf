@@ -1,0 +1,247 @@
+{
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5125,
+      "count": 381,
+      "max": [
+        141.0
+      ],
+      "min": [
+        0.0
+      ],
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 142,
+      "max": [
+        -268.436676025391,
+        -455.436676025391,
+        75.5027694702148
+      ],
+      "min": [
+        -329.148071289062,
+        -550.105590820312,
+        67.6638031005859
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 142,
+      "max": [
+        1.0,
+        0.996404349803925,
+        0.999994218349457
+      ],
+      "min": [
+        -0.995288670063019,
+        -0.978749811649323,
+        -0.971763789653778
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5126,
+      "count": 142,
+      "max": [
+        0.841735780239105,
+        0.866876125335693
+      ],
+      "min": [
+        0.0665203109383583,
+        0.342017114162445
+      ],
+      "type": "VEC2"
+    }
+  ],
+  "asset": {
+    "generator": "fanvanzh",
+    "version": "2.0"
+  },
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 1524,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 1704,
+      "byteOffset": 1524,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 1704,
+      "byteOffset": 3228,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 1136,
+      "byteOffset": 4932,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 1464,
+      "byteOffset": 6068
+    },
+    {
+      "buffer": 0,
+      "byteLength": 330,
+      "byteOffset": 7532,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 151,
+      "byteOffset": 7864,
+      "target": 34962
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 8016,
+      "uri": "Tile_+000_+000.b3dm.bin"
+    }
+  ],
+  "extensions": {
+    "KHR_techniques_webgl": {
+      "programs": [
+        {
+          "attributes": [
+            "a_position",
+            "a_texcoord0"
+          ],
+          "fragmentShader": 1,
+          "vertexShader": 0
+        }
+      ],
+      "shaders": [
+        {
+          "bufferView": 5,
+          "type": 35633
+        },
+        {
+          "bufferView": 6,
+          "type": 35632
+        }
+      ],
+      "techniques": [
+        {
+          "attributes": {
+            "a_batchid": {
+              "semantic": "_BATCHID",
+              "type": 5123
+            },
+            "a_position": {
+              "semantic": "POSITION",
+              "type": 35665
+            },
+            "a_texcoord0": {
+              "semantic": "TEXCOORD_0",
+              "type": 35664
+            }
+          },
+          "program": 0,
+          "states": {
+            "enable": [
+              2884,
+              2929
+            ]
+          },
+          "uniforms": {
+            "u_diffuse": {
+              "type": 35678
+            },
+            "u_modelViewMatrix": {
+              "semantic": "MODELVIEW",
+              "type": 35676
+            },
+            "u_projectionMatrix": {
+              "semantic": "PROJECTION",
+              "type": 35676
+            }
+          }
+        }
+      ]
+    }
+  },
+  "extensionsRequired": [
+    "KHR_techniques_webgl"
+  ],
+  "extensionsUsed": [
+    "KHR_techniques_webgl"
+  ],
+  "images": [
+    {
+      "name": "Tile_+000_+000.b3dm.gltf._0",
+      "uri": "Tile_+000_+000.b3dm.gltf._0.jpg"
+    }
+  ],
+  "materials": [
+    {
+      "extensions": {
+        "KHR_techniques_webgl": {
+          "technique": 0,
+          "values": {
+            "u_diffuse": {
+              "index": 0,
+              "texCoord": 0
+            }
+          }
+        }
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 2,
+            "POSITION": 1,
+            "TEXCOORD_0": 3
+          },
+          "indices": 0,
+          "material": 0,
+          "mode": 4
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9986,
+      "wrapR": 10497,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "scene": 0,
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    }
+  ]
+}
