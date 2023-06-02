@@ -1474,26 +1474,26 @@ int main()
 		//bool res = osgb2glb(osgb_dir_pair[i].in_dir.c_str(), osgb_dir_pair[i].out_dir.c_str());
 		//b3dmToGlb(osgb_dir_pair[i].in_dir, osgb_dir_pair[i].out_dir);
 
-		glbToGltf(osgb_dir_pair[i].in_dir, osgb_dir_pair[i].out_dir);
+		//glbToGltf(osgb_dir_pair[i].in_dir, osgb_dir_pair[i].out_dir);
 	}
 	
 	float seconds = float(clock() - begin_time) / 1000;    //最小精度到ms
 	std::cout << "task over, cost " << seconds << "s" << endl;
 
 
-	//std::string nodeFileName = "E:\\jing_zhong\\OSG_Demo\\x64\\Release\\cow.osg";// "E:\\jing_zhong\\3dtiles\\data\\test\\test.osgb";
-	//osg::ref_ptr<osg::Node> root = osgDB::readNodeFile(nodeFileName);
-	//if (!root.valid()) {
-	//	std::cout << "fail read osgb file" << std::endl;
-	//	return false;
-	//}
+	std::string nodeFileName = "E:\\jing_zhong\\OSG_Demo\\x64\\Release\\cow.osg";// "E:\\jing_zhong\\3dtiles\\data\\test\\test.osgb";
+	osg::ref_ptr<osg::Node> root = osgDB::readNodeFile(nodeFileName);
+	if (!root.valid()) {
+		std::cout << "fail read osgb file" << std::endl;
+		return false;
+	}
 
-	//OSGBPageLodVisitor lodVisitor("E:\\jing_zhong\\OSG_Demo\\x64\\Release");//"E:\\jing_zhong\\3dtiles\\data\\test"
-	//root->accept(lodVisitor);
-	//if (lodVisitor.geometryArray.empty()) {
-	//	std::cout << "empty geometry in osgb file" << std::endl;
-	//	return false;
-	//}
+	OSGBPageLodVisitor lodVisitor("E:\\jing_zhong\\OSG_Demo\\x64\\Release");//"E:\\jing_zhong\\3dtiles\\data\\test"
+	root->accept(lodVisitor);
+	if (lodVisitor.geometryArray.empty()) {
+		std::cout << "empty geometry in osgb file" << std::endl;
+		return false;
+	}
 
 	//std::cout << lodVisitor.geometryArray.size() << std::endl;
 
@@ -1687,8 +1687,7 @@ int main()
 	//pStatsHandler->setKeyEventTogglesOnScreenStats(osgGA::GUIEventAdapter::KEY_F11);
 	//view.addEventHandler(pStatsHandler);
 	//view.setSceneData(osgDB::readNodeFile("./cow.osg"));
-	std::string filenameStr = "E:\\KY_work\\tile_32_25\\Data\\Model\\Model.osgb";//"E:\\KY_work\\Production_3\\Data\\Tile_+000_+000\\Tile_+000_+000.osgb"
-	filenameStr = "./cow.osg";
+	std::string filenameStr = "E:\\KY_work\\Production_3\\Data\\Tile_+000_+000\\Tile_+000_+000.osgb";
 	view.setSceneData(osgDB::readNodeFile(filenameStr));
 
 	//vector<string> tempData;
