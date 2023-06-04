@@ -60,6 +60,7 @@ struct TileResult {
 
 struct OsgbInfo {
 	string in_dir;
+	string mid_dir;
 	string out_dir;
 	TileResult sender;
 };
@@ -732,31 +733,214 @@ void write_osgGeometry(osg::Geometry* g, OsgBuildState* osgState)
 //	return true;
 //}
 
+//bool osgb2glb_buf(std::string path, std::string& glb_buff, MeshInfo& mesh_info) {
+//	vector<string> fileNames = { path };
+//	std::cout << path << endl;
+//	std::string parent_path = get_parent(path);
+//	std::cout << parent_path << endl;
+//	//osg::ref_ptr<osg::Node> root = osgDB::readNodeFiles(fileNames);
+//
+//	osg::ref_ptr<osg::Node> root = osgDB::readNodeFile(path);
+//	if (!root.valid()) {
+//		return false;
+//	}
+//
+//	OSGBPageLodVisitor infoVisitor(parent_path);//"E:\\jing_zhong\\3dtiles\\data\\test"
+//	root->accept(infoVisitor);
+//	if (infoVisitor.geometryArray.empty()) {
+//		std::cout << "empty geometry in osgb file" << std::endl;
+//		return false;
+//	}
+//
+//	std::cout << infoVisitor.geometryArray.size() << std::endl;
+//
+//	//InfoVisitor infoVisitor(parent_path);
+//	//root->accept(infoVisitor);
+//	//if (infoVisitor.geometry_array.empty())
+//	//	return false;
+//
+//	osgUtil::SmoothingVisitor sv;
+//	root->accept(sv);
+//
+//	tinygltf::TinyGLTF gltf;
+//	tinygltf::Model model;
+//	tinygltf::Buffer buffer;
+//
+//	osg::Vec3f point_max, point_min;
+//	OsgBuildState osgState = {
+//		&buffer, &model, osg::Vec3f(-1e38,-1e38,-1e38), osg::Vec3f(1e38,1e38,1e38), -1, -1
+//	};
+//	// mesh
+//	model.meshes.resize(1);
+//	int primitive_idx = 0;
+//	for (int ij=0;ij<infoVisitor.geometryArray.size();ij++)
+//	{
+//		auto g = infoVisitor.geometryArray[ij];
+//		if (!g->getVertexArray() || g->getVertexArray()->getDataSize() == 0)
+//			continue;
+//
+//		write_osgGeometry(g, &osgState);
+//		// update primitive material index
+//		if (infoVisitor.textureArray.size())
+//		{
+//			for (unsigned int k = 0; k < g->getNumPrimitiveSets(); k++)
+//			{
+//				auto tex = infoVisitor.textureMap[g];
+//				// if hava texture
+//				if (tex)
+//				{
+//					for (auto texture : infoVisitor.textureArray)
+//					{
+//						model.meshes[0].primitives[primitive_idx].material++;
+//						if (tex == texture)
+//							break;
+//					}
+//				}
+//				primitive_idx++;
+//			}
+//		}
+//	}
+//	// empty geometry or empty vertex-array
+//	if (model.meshes[0].primitives.empty())
+//		return false;
+//
+//	mesh_info.min = {
+//		osgState.point_min.x(),
+//		osgState.point_min.y(),
+//		osgState.point_min.z()
+//	};
+//	mesh_info.max = {
+//		osgState.point_max.x(),
+//		osgState.point_max.y(),
+//		osgState.point_max.z()
+//	};
+//	// image
+//	{
+//		for (auto tex : infoVisitor.textureArray)
+//		{
+//			unsigned buffer_start = buffer.data.size();
+//			std::vector<unsigned char> jpeg_buf;
+//			jpeg_buf.reserve(512 * 512 * 3);
+//			int width, height, comp;
+//			if (tex) {
+//				if (tex->getNumImages() > 0) {
+//					osg::Image* img = tex->getImage(0);
+//					if (img) {
+//						width = img->s();
+//						height = img->t();
+//						comp = img->getPixelSizeInBits();
+//						if (comp == 8) comp = 1;
+//						if (comp == 24) comp = 3;
+//						if (comp == 4) {
+//							comp = 3;
+//							fill_4BitImage(jpeg_buf, img, width, height);
+//						}
+//						else
+//						{
+//							unsigned row_step = img->getRowStepInBytes();
+//							unsigned row_size = img->getRowSizeInBytes();
+//							for (size_t i = 0; i < height; i++)
+//							{
+//								jpeg_buf.insert(jpeg_buf.end(),
+//									img->data() + row_step * i,
+//									img->data() + row_step * i + row_size);
+//							}
+//						}
+//					}
+//				}
+//			}
+//			if (!jpeg_buf.empty()) {
+//				int buf_size = buffer.data.size();
+//				buffer.data.reserve(buffer.data.size() + width * height * comp);
+//				stbi_write_jpg_to_func(write_buf, &buffer.data, width, height, comp, jpeg_buf.data(), 80);
+//			}
+//			else {
+//				std::vector<char> v_data;
+//				width = height = 256;
+//				v_data.resize(width * height * 3);
+//				stbi_write_jpg_to_func(write_buf, &buffer.data, width, height, 3, v_data.data(), 80);
+//			}
+//			tinygltf::Image image;
+//			image.mimeType = "image/jpeg";
+//			image.bufferView = model.bufferViews.size();
+//			model.images.push_back(image);
+//			tinygltf::BufferView bfv;
+//			bfv.buffer = 0;
+//			bfv.byteOffset = buffer_start;
+//			alignment_buffer(buffer.data);
+//			bfv.byteLength = buffer.data.size() - buffer_start;
+//			model.bufferViews.push_back(bfv);
+//		}
+//	}
+//	// node
+//	{
+//		tinygltf::Node node;
+//		node.mesh = 0;
+//		model.nodes.push_back(node);
+//	}
+//	// scene
+//	{
+//		tinygltf::Scene sence;
+//		sence.nodes.push_back(0);
+//		model.scenes = { sence };
+//		model.defaultScene = 0;
+//	}
+//	// sample
+//	{
+//		tinygltf::Sampler sample;
+//		sample.magFilter = TINYGLTF_TEXTURE_FILTER_LINEAR;
+//		sample.minFilter = TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR;
+//		sample.wrapS = TINYGLTF_TEXTURE_WRAP_REPEAT;
+//		sample.wrapT = TINYGLTF_TEXTURE_WRAP_REPEAT;
+//		model.samplers = { sample };
+//	}
+//	// use KHR_materials_unlit
+//	model.extensionsRequired = { "KHR_materials_unlit" };
+//	model.extensionsUsed = { "KHR_materials_unlit" };
+//	for (int i = 0; i < infoVisitor.textureArray.size(); i++)
+//	{
+//		tinygltf::Material mat = make_color_material_osgb(1.0, 1.0, 1.0);
+//		mat.b_unlit = true; // use KHR_materials_unlit
+//		tinygltf::Parameter baseColorTexture;
+//		baseColorTexture.json_int_value = { std::pair<string,int>("index",i) };
+//		mat.values["baseColorTexture"] = baseColorTexture;
+//		model.materials.push_back(mat);
+//	}
+//
+//	// finish buffer
+//	model.buffers.push_back(std::move(buffer));
+//	// texture
+//	{
+//		int texture_index = 0;
+//		for (auto tex : infoVisitor.textureArray)
+//		{
+//			tinygltf::Texture texture;
+//			texture.source = texture_index++;
+//			texture.sampler = 0;
+//			model.textures.push_back(texture);
+//		}
+//	}
+//	model.asset.version = "2.0";
+//	model.asset.generator = "fanvanzh";
+//
+//	glb_buff = gltf.Serialize(&model);
+//	return true;
+//}
 bool osgb2glb_buf(std::string path, std::string& glb_buff, MeshInfo& mesh_info) {
 	vector<string> fileNames = { path };
-	std::cout << path << endl;
 	std::string parent_path = get_parent(path);
-	std::cout << parent_path << endl;
-	//osg::ref_ptr<osg::Node> root = osgDB::readNodeFiles(fileNames);
+	parent_path = parent_path.substr(0, parent_path.length() - 1);
+	cout << parent_path << endl;
 
 	osg::ref_ptr<osg::Node> root = osgDB::readNodeFile(path);
+	//osg::ref_ptr<osg::Node> root = osgDB::readNodeFiles(fileNames);
 	if (!root.valid()) {
 		return false;
 	}
-
-	OSGBPageLodVisitor infoVisitor(parent_path);//"E:\\jing_zhong\\3dtiles\\data\\test"
+	InfoVisitor infoVisitor(parent_path);
 	root->accept(infoVisitor);
-	if (infoVisitor.geometryArray.empty()) {
-		std::cout << "empty geometry in osgb file" << std::endl;
+	if (infoVisitor.geometry_array.empty())
 		return false;
-	}
-
-	std::cout << infoVisitor.geometryArray.size() << std::endl;
-
-	//InfoVisitor infoVisitor(parent_path);
-	//root->accept(infoVisitor);
-	//if (infoVisitor.geometry_array.empty())
-	//	return false;
 
 	osgUtil::SmoothingVisitor sv;
 	root->accept(sv);
@@ -772,23 +956,22 @@ bool osgb2glb_buf(std::string path, std::string& glb_buff, MeshInfo& mesh_info) 
 	// mesh
 	model.meshes.resize(1);
 	int primitive_idx = 0;
-	for (int ij=0;ij<infoVisitor.geometryArray.size();ij++)
+	for (auto g : infoVisitor.geometry_array)
 	{
-		auto g = infoVisitor.geometryArray[ij];
 		if (!g->getVertexArray() || g->getVertexArray()->getDataSize() == 0)
 			continue;
 
 		write_osgGeometry(g, &osgState);
 		// update primitive material index
-		if (infoVisitor.textureArray.size())
+		if (infoVisitor.texture_array.size())
 		{
 			for (unsigned int k = 0; k < g->getNumPrimitiveSets(); k++)
 			{
-				auto tex = infoVisitor.textureMap[g];
+				auto tex = infoVisitor.texture_map[g];
 				// if hava texture
 				if (tex)
 				{
-					for (auto texture : infoVisitor.textureArray)
+					for (auto texture : infoVisitor.texture_array)
 					{
 						model.meshes[0].primitives[primitive_idx].material++;
 						if (tex == texture)
@@ -815,7 +998,7 @@ bool osgb2glb_buf(std::string path, std::string& glb_buff, MeshInfo& mesh_info) 
 	};
 	// image
 	{
-		for (auto tex : infoVisitor.textureArray)
+		for (auto tex : infoVisitor.texture_array)
 		{
 			unsigned buffer_start = buffer.data.size();
 			std::vector<unsigned char> jpeg_buf;
@@ -896,7 +1079,7 @@ bool osgb2glb_buf(std::string path, std::string& glb_buff, MeshInfo& mesh_info) 
 	// use KHR_materials_unlit
 	model.extensionsRequired = { "KHR_materials_unlit" };
 	model.extensionsUsed = { "KHR_materials_unlit" };
-	for (int i = 0; i < infoVisitor.textureArray.size(); i++)
+	for (int i = 0; i < infoVisitor.texture_array.size(); i++)
 	{
 		tinygltf::Material mat = make_color_material_osgb(1.0, 1.0, 1.0);
 		mat.b_unlit = true; // use KHR_materials_unlit
@@ -911,7 +1094,7 @@ bool osgb2glb_buf(std::string path, std::string& glb_buff, MeshInfo& mesh_info) 
 	// texture
 	{
 		int texture_index = 0;
-		for (auto tex : infoVisitor.textureArray)
+		for (auto tex : infoVisitor.texture_array)
 		{
 			tinygltf::Texture texture;
 			texture.source = texture_index++;
@@ -939,7 +1122,10 @@ bool osgb2glb(const char* in, const char* out)
 		return false;
 	}
 
-	ret = write_file(out, glb_buf.data());
+	//std::cout << "osgb2glb转换成功： " << glb_buf << std::endl;
+	std::cout << "osgb2glb转换成功： " << std::endl;
+	ret = write_file(out, glb_buf.data(), (unsigned long)glb_buf.size());
+	//ret = write_file(out, glb_buf.data());
 	if (!ret)
 	{
 		LOG_E("write glb file failed");
@@ -1326,9 +1512,9 @@ int main()
 {
 	const clock_t begin_time = clock();
 	std::cout << "This is JIAO Jingguo's OSG Demo Program(------2023.5.28)!" << std::endl;
-	string inputFolder = "E:\\KY_work\\Production_3", outputDir = "E:\\KY_work\\Production_3-JJG";
-	inputFolder = "E:\\KY_work\\Production_3_tiles3d"; outputDir = "E:\\KY_work\\Production_3-GLB";
-	inputFolder = "E:\\KY_work\\Production_3-GLB"; outputDir = "E:\\KY_work\\Production_3-GLTF";
+	string inputFolder = "E:\\KY_work\\Production_3", outputDir = "E:\\KY_work\\Production_3-GLB+B3DM";
+	/*inputFolder = "E:\\KY_work\\Production_3_tiles3d"; outputDir = "E:\\KY_work\\Production_3-GLB";
+	inputFolder = "E:\\KY_work\\Production_3-GLB"; outputDir = "E:\\KY_work\\Production_3-GLTF";*/
 	if (!isDirExist(inputFolder)) return 0;
 	/*
 	  第一步，传入输入数据目录、解析metadata.xml文件，拿到ENU/EPSG后获取中心经度和中心纬度；
@@ -1396,8 +1582,8 @@ int main()
 	   第三步：判断输入目录下是否存在Data文件夹，如果存在，则对输出数据目录创建与输入数据目录同样的文件夹结构；
 	*/
 	std::cout << "第三步：判断输入目录下是否存在Data文件夹，如果存在，则对输出数据目录创建与输入数据目录同样的文件夹结构！" << endl;
-	string dataDirectory = filePath + "Data", fileType = ".osgb", newFileType = ".b3dm";
-	fileType = ".glb", newFileType = ".gltf";
+	string dataDirectory = filePath + "Data", fileType = ".osgb", midFileType=".glb", newFileType = ".b3dm";
+	//fileType = ".glb", newFileType = ".gltf";
 	vector<OsgbInfo> osgb_dir_pair;
 	if (!isDirExist(dataDirectory))
 	{
@@ -1413,12 +1599,15 @@ int main()
 	{
 		string tempStr = temp[i];
 		string replaceNewDataFileName = replace_all_distinct(temp[i], dataDirectory, outputDir + "\\Data");
+		string replaceNewDataFileName2 = replace_all_distinct(temp[i], dataDirectory, outputDir + "\\Data");
 		string::size_type dotPos = replaceNewDataFileName.find_last_of('.') + 1;
 		if (dotPos && replaceNewDataFileName.substr(dotPos - 1, replaceNewDataFileName.length() - fileType.length()) == fileType) //如果后缀名为.osgb
 		{
 			string newFilename = replace_all_distinct(replaceNewDataFileName, fileType, newFileType);
+			string midFilename = replace_all_distinct(replaceNewDataFileName2, fileType, midFileType);
 			OsgbInfo osgbInfo;
 			osgbInfo.in_dir = tempStr;
+			osgbInfo.mid_dir = midFilename;
 			osgbInfo.out_dir = newFilename;
 			osgb_dir_pair.push_back(osgbInfo);
 
@@ -1470,10 +1659,20 @@ int main()
 		if (!out_ptr)
 			std::cout << "第"<<i << "个转换failed!" << endl;
 		else*/
-		std::cout << osgb_dir_pair[i].in_dir.c_str()<< " ----> " << osgb_dir_pair[i].out_dir.c_str()<< endl;
-		//bool res = osgb2glb(osgb_dir_pair[i].in_dir.c_str(), osgb_dir_pair[i].out_dir.c_str());
-		//b3dmToGlb(osgb_dir_pair[i].in_dir, osgb_dir_pair[i].out_dir);
+		std::cout << osgb_dir_pair[i].in_dir.c_str() << " ----> " << osgb_dir_pair[i].mid_dir.c_str() << endl;
+		std::cout << osgb_dir_pair[i].mid_dir.c_str() << " ----> " << osgb_dir_pair[i].out_dir.c_str() << endl;
+		bool res = osgb2glb(osgb_dir_pair[i].in_dir.c_str(), osgb_dir_pair[i].mid_dir.c_str());
+		if (res)
+		{
+			std::cout << "第" << i + 1 << "个 osgb2glb 任务转换成功！" << endl;
+		}
+		bool res2 = glbToB3dm(osgb_dir_pair[i].mid_dir.c_str(), osgb_dir_pair[i].out_dir.c_str());
+		if (res2)
+		{
+			std::cout << "第" << i + 1 << "个 glb2b3dm 任务转换成功！" << endl;
+		}
 
+		//b3dmToGlb(osgb_dir_pair[i].in_dir, osgb_dir_pair[i].out_dir);
 		//glbToGltf(osgb_dir_pair[i].in_dir, osgb_dir_pair[i].out_dir);
 	}
 	
@@ -1481,19 +1680,25 @@ int main()
 	std::cout << "task over, cost " << seconds << "s" << endl;
 
 
-	std::string nodeFileName = "E:\\jing_zhong\\OSG_Demo\\x64\\Release\\cow.osg";// "E:\\jing_zhong\\3dtiles\\data\\test\\test.osgb";
-	osg::ref_ptr<osg::Node> root = osgDB::readNodeFile(nodeFileName);
-	if (!root.valid()) {
-		std::cout << "fail read osgb file" << std::endl;
-		return false;
-	}
+	//std::string nodeFileName = "E:\\jing_zhong\\OSG_Demo\\x64\\Release\\cow.osg";// "E:\\jing_zhong\\3dtiles\\data\\test\\test.osgb";
+	//osg::ref_ptr<osg::Node> root = osgDB::readNodeFile(nodeFileName);
+	//if (!root.valid()) {
+	//	std::cout << "fail read osgb file" << std::endl;
+	//	return false;
+	//}
 
-	OSGBPageLodVisitor lodVisitor("E:\\jing_zhong\\OSG_Demo\\x64\\Release");//"E:\\jing_zhong\\3dtiles\\data\\test"
-	root->accept(lodVisitor);
-	if (lodVisitor.geometryArray.empty()) {
-		std::cout << "empty geometry in osgb file" << std::endl;
-		return false;
-	}
+	//osgb2glb("E:\\KY_work\\Production_3\\Data\\Tile_+000_+000\\Tile_+000_+000_L19_00010t3.osgb", "E:\\KY_work\\Production_3-GLB\\Data\\Tile_+000_+000\\Tile_+000_+000_L19_00010t3.glb");
+	//glbToGltf("E:\\KY_work\\Production_3-GLB\\Data\\Tile_+000_+000\\Tile_+000_+000_L19_00010t3.glb", "E:\\KY_work\\Production_3-GLB\\Data\\Tile_+000_+000\\Tile_+000_+000_L19_00010t3.gltf");
+	//glbToB3dm("E:\\KY_work\\Production_3-GLB\\Data\\Tile_+000_+000\\Tile_+000_+000_L19_00010t3.glb", "E:\\KY_work\\Production_3-GLB\\Data\\Tile_+000_+000\\Tile_+000_+000_L19_00010t3.b3dm");
+	//
+	//glbToB3dm("E:\\jing_zhong\\3dtiles\\data\\test\\test.glb", "E:\\jing_zhong\\3dtiles\\data\\test\\test.b3dm");
+
+	//OSGBPageLodVisitor lodVisitor("E:\\jing_zhong\\OSG_Demo\\x64\\Release");//"E:\\jing_zhong\\3dtiles\\data\\test"
+	//root->accept(lodVisitor);
+	//if (lodVisitor.geometryArray.empty()) {
+	//	std::cout << "empty geometry in osgb file" << std::endl;
+	//	return false;
+	//}
 
 	//std::cout << lodVisitor.geometryArray.size() << std::endl;
 
@@ -1681,7 +1886,7 @@ int main()
 	view.addEventHandler(new osgViewer::ScreenCaptureHandler);//截图  快捷键 c
 	view.addEventHandler(new osgViewer::WindowSizeHandler);//全屏  快捷键f
 	//方法一
-	view.addEventHandler(new osgViewer::StatsHandler);//查看帧数 s
+	//view.addEventHandler(new osgViewer::StatsHandler);//查看帧数 s
 	//方法二
 	//osgViewer::StatsHandler* pStatsHandler = new osgViewer::StatsHandler;
 	//pStatsHandler->setKeyEventTogglesOnScreenStats(osgGA::GUIEventAdapter::KEY_F11);
@@ -1700,8 +1905,6 @@ int main()
 	//	osg::ref_ptr<osg::Node> root = osgDB::readNodeFiles(osgbfiles);
 	//	view.setSceneData(root);
 	//}
-	
+	system("pause");
 	return view.run();
-	//system("pause");
-	//return 0;
 }

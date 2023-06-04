@@ -62,11 +62,6 @@ bool mkdirs(const char* path)
 	return false;
 }
 
-bool write_file(const char* filename, const char* buf, unsigned long buf_len)
-{
-	return false;
-}
-
 void log_error(const char* msg)
 {
 	std::cout << msg << std::endl;
@@ -102,6 +97,30 @@ bool write_file(std::string filename, std::string content)
 	const char *Content = &content[0];
 	ofs << Content;
 	ofs.close();
+	return true;
+}
+
+bool write_file(const char* filename, const char* buf, unsigned long buf_len) //将字符串以二进制内容写入文件 By JIAO Jingguo 2023.6.4
+{
+	/*std::ofstream ofs;
+	ofs.open(filename, std::ios::out | std::ios::binary);
+	const char *Content = buf;
+	ofs << Content;
+	ofs.close();
+	return true;*/
+	FILE* f1 = fopen(filename, "wb");
+	if (!f1)
+	{
+		printf("can`t open file: %s\n", filename);
+		return false;
+	}
+	int glb_len = buf_len;
+	if (glb_len != fwrite(buf, 1, glb_len, f1))
+	{
+		printf("write file %s error\n", filename);
+		return false;
+	}
+	fclose(f1);
 	return true;
 }
 

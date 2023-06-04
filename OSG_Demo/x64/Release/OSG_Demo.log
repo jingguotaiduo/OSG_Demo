@@ -32,11 +32,12 @@ e:\jing_zhong\osg_demo\osg_demo\gdal\gdal_priv.h(1144): warning C4251: “GDALDr
           ]
   main.cpp
 e:\jing_zhong\osg_demo\osg_demo\tiny_gltf.h(921): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+main.cpp(1669): warning C4800: “int”: 将值强制为布尔值“true”或“false”(性能警告)
   OSGBPageLodVisitor.cpp
   tinyxml2.cpp
     正在创建库 E:\jing_zhong\OSG_Demo\x64\Release\OSG_Demo.lib 和对象 E:\jing_zhong\OSG_Demo\x64\Release\OSG_Demo.exp
   正在生成代码
-  All 2648 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  All 5350 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   已完成代码的生成
   OSG_Demo.vcxproj -> E:\jing_zhong\OSG_Demo\x64\Release\OSG_Demo.exe
   OSG_Demo.vcxproj -> E:\jing_zhong\OSG_Demo\x64\Release\OSG_Demo.pdb (Full PDB)
