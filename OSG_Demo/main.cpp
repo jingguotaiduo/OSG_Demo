@@ -1315,7 +1315,7 @@ std::string encode_tile_json(osg_tree& tree, double x, double y)
 
 
 void* osgb23dtile_path(const char* in_path, const char* out_path,
-	double *box, int* len, double x, double y,
+	double *box, size_t* len, double x, double y,
 	int max_lvl, bool pbr_texture)
 {
 	std::string path =in_path;
@@ -1337,6 +1337,7 @@ void* osgb23dtile_path(const char* in_path, const char* out_path,
 	calc_geometric_error(root);
 	root.geometricError = 1000.0;
 	std::string json = encode_tile_json(root, x, y);
+	/*std::cout << "结果为：" << json << std::endl;*/
 	root.bbox.extend(0.2);
 	memcpy(box, root.bbox.max.data(), 3 * sizeof(double));
 	memcpy(box + 3, root.bbox.min.data(), 3 * sizeof(double));
@@ -1512,7 +1513,7 @@ int main()
 {
 	const clock_t begin_time = clock();
 	std::cout << "This is JIAO Jingguo's OSG Demo Program(------2023.5.28)!" << std::endl;
-	string inputFolder = "E:\\KY_work\\Production_3", outputDir = "E:\\KY_work\\Production_3-GLB+B3DM";
+	string inputFolder = "E:\\KY_work\\Production_3", outputDir = "E:\\KY_work\\Production_3-Test";
 	/*inputFolder = "E:\\KY_work\\Production_3_tiles3d"; outputDir = "E:\\KY_work\\Production_3-GLB";
 	inputFolder = "E:\\KY_work\\Production_3-GLB"; outputDir = "E:\\KY_work\\Production_3-GLTF";*/
 	if (!isDirExist(inputFolder)) return 0;
@@ -1638,30 +1639,52 @@ int main()
 	std::cout << "第六步：遍历所有的任务对，对于每个任务对调用osgb23dtile_path函数进行转换，对每个任务对的结果生成TileResult（包含输出数据路径、json_buf、root_box）！" << endl;
 	for (int i = 0; i < osgb_dir_pair.size(); i++)
 	{
-		double *root_box = new double[6];
+		double *root_box = new double[6];//六维向量
 		*root_box = 0;
 		*(root_box + 1) = 0;
 		*(root_box + 2) = 0;
 		*(root_box + 3) = 0;
 		*(root_box + 4) = 0;
 		*(root_box + 5) = 0;
-		vector<int> json_buf;
-	    int *json_len = 0;
-		/*auto out_ptr = osgb23dtile_path(&osgb_dir_pair[i].in_dir[0],
-			&osgb_dir_pair[i].out_dir[0],
-			root_box,
-			json_len,
-			rad_x,
-			rad_y,
-			max_lvl,
-			pbr_texture);
-			
-		if (!out_ptr)
+		
+		size_t json_len = 0;
+		
+		//std::string& b3dm_buf = osgb_dir_pair[i].out_dir;
+		void* res = osgb23dtile_path(&osgb_dir_pair[i].in_dir[0],
+						&osgb_dir_pair[i].out_dir[0],
+						root_box,
+						&json_len,
+						rad_x,
+						rad_y,
+						max_lvl,
+						pbr_texture);
+		char * Res;
+		Res = (char *)res;
+		/*std::string *Res = static_cast<std::string*>(res);*/// https://stackoverflow.com/questions/3076968/converting-a-void-to-a-stdstring
+		std::string json_buf = Res;
+		std::cout << json_buf << std::endl;
+		size_t totalLength = json_buf.length();
+		std::cout << "长度为：" << totalLength << std::endl;
+
+		
+		
+		if (json_buf.length() <1)
 			std::cout << "第"<<i << "个转换failed!" << endl;
-		else*/
-		std::cout << osgb_dir_pair[i].in_dir.c_str() << " ----> " << osgb_dir_pair[i].mid_dir.c_str() << endl;
-		std::cout << osgb_dir_pair[i].mid_dir.c_str() << " ----> " << osgb_dir_pair[i].out_dir.c_str() << endl;
-		bool res = osgb2glb(osgb_dir_pair[i].in_dir.c_str(), osgb_dir_pair[i].mid_dir.c_str());
+		else
+		{
+			std::cout << osgb_dir_pair[i].in_dir.c_str() << " ----> " << osgb_dir_pair[i].mid_dir.c_str() << endl;
+			std::cout << osgb_dir_pair[i].mid_dir.c_str() << " ----> " << osgb_dir_pair[i].out_dir.c_str() << endl;
+			vector<double>	box_v;
+			box_v.push_back(*root_box); box_v.push_back(*(root_box + 1)); box_v.push_back(*(root_box + 2));
+			box_v.push_back(*(root_box + 3)); box_v.push_back(*(root_box + 4)); box_v.push_back(*(root_box + 5)); //https://stackoverflow.com/questions/56129043/converting-double-to-stdvectordouble-gives-me-error
+			TileResult t;
+			t.box_v = box_v;
+			t.path = osgb_dir_pair[i].out_dir;
+			t.selfjson = json_buf;
+			osgb_dir_pair[i].sender = t;
+		}
+		
+		/*bool res = osgb2glb(osgb_dir_pair[i].in_dir.c_str(), osgb_dir_pair[i].mid_dir.c_str());
 		if (res)
 		{
 			std::cout << "第" << i + 1 << "个 osgb2glb 任务转换成功！" << endl;
@@ -1670,11 +1693,59 @@ int main()
 		if (res2)
 		{
 			std::cout << "第" << i + 1 << "个 glb2b3dm 任务转换成功！" << endl;
-		}
+		}*/
 
 		//b3dmToGlb(osgb_dir_pair[i].in_dir, osgb_dir_pair[i].out_dir);
 		//glbToGltf(osgb_dir_pair[i].in_dir, osgb_dir_pair[i].out_dir);
 	}
+	
+	vector<TileResult> tile_array;
+	for (int i = 0; i < osgb_dir_pair.size(); i++)
+	{
+		if (!osgb_dir_pair[i].sender.selfjson.is_null())
+		{
+			tile_array.push_back(osgb_dir_pair[i].sender);
+		}
+	}
+
+	vector<double> root_box = { -1.0E+38, -1.0E+38, -1.0E+38, 1.0E+38, 1.0E+38, 1.0E+38 };
+
+	for (int i = 0; i < tile_array.size(); i++)
+	{
+		TileResult x = tile_array[i];
+		for (int j = 0; j < 6; j++)
+		{
+			if (j < 3)
+			{
+				if (x.box_v[j] > root_box[j])
+				{
+					root_box[j] = x.box_v[j];
+				}
+			}
+			else
+			{
+				if (x.box_v[j] < root_box[j])
+				{
+					root_box[j] = x.box_v[j];
+				}
+			}
+			
+		}
+	}
+	double tras_height = 0;
+	if (region_offset > 0)
+	{
+		tras_height = region_offset - root_box[5];
+	}
+
+	vector<double> trans_vec = {
+		0,0,0,0,
+		0,0,0,0,
+		0,0,0,0,
+		0,0,0,0
+	};
+
+	transform_c(center_x, center_y, tras_height, &trans_vec[0]);
 	
 	float seconds = float(clock() - begin_time) / 1000;    //最小精度到ms
 	std::cout << "task over, cost " << seconds << "s" << endl;

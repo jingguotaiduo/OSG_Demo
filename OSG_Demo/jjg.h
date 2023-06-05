@@ -61,6 +61,8 @@
 
 	double meter_to_longti(double m, double lati);//长度（单位：m） 转 十进制经度
 
+	void transform_c(double center_x, double center_y, double height_min, double* ptr);
+
 	bool mkdirs(const char* path);//创建目录的函数
 
 	bool epsg_convert(int insrs, double* val, char* path);//epsg坐标系转换
