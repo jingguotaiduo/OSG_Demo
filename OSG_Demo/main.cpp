@@ -307,7 +307,7 @@ osg_tree get_all_tree(std::string& file_name) {
 double get_geometric_error(TileBox& bbox) {
 	if (bbox.max.empty() || bbox.min.empty())
 	{
-		LOG_E("bbox is empty!");
+		LOG_E("bbox is empty!"); //By JIAO Jingguo 2023.6.9
 		return 0;
 	}
 
@@ -1202,6 +1202,15 @@ bool osgb2b3dm_buf(std::string path, std::string& b3dm_buf, TileBox& tile_box)
 }
 
 
+std::string getDataPath(std::string str)
+{
+	size_t dPos = str.find("Data");
+	std::string FilePathData = "";
+	for (size_t i = 0; i < dPos; i++)
+		FilePathData += str[i];
+	return FilePathData;
+}
+
 void do_tile_job(osg_tree& tree, std::string out_path, int max_lvl) {
 	std::string json_str;
 	if (tree.file_name.empty()) return;
@@ -1209,9 +1218,17 @@ void do_tile_job(osg_tree& tree, std::string out_path, int max_lvl) {
 	if (lvl > max_lvl) return;
 	std::string b3dm_buf;
 	osgb2b3dm_buf(tree.file_name, b3dm_buf, tree.bbox);
-	std::string out_file = out_path;
-	out_file += "/";
-	out_file += replace(get_file_name(tree.file_name), ".osgb", ".b3dm");
+
+	string osgbFileName = get_file_name(tree.file_name);
+
+
+	string inputDataPath = getDataPath(tree.file_name), outputDataPath = getDataPath(out_path);
+	string b3dmFileName = replace(tree.file_name, ".osgb", ".b3dm");
+	std::string out_file = replace_all_distinct(b3dmFileName, inputDataPath, outputDataPath);;// out_path;
+	
+	/*out_file += "/";
+	out_file += replace(get_file_name(tree.file_name), ".osgb", ".b3dm");*/
+
 	if (!b3dm_buf.empty()) {
 		write_file(out_file.c_str(), b3dm_buf.data(), b3dm_buf.size());
 	}
@@ -1319,6 +1336,7 @@ void* osgb23dtile_path(const char* in_path, const char* out_path,
 	int max_lvl, bool pbr_texture)
 {
 	std::string path =in_path;
+	std::cout << path << std::endl;
 	osg_tree root = get_all_tree(path);
 	if (root.file_name.empty())
 	{
@@ -1564,7 +1582,7 @@ int main()
 	  第二步，输出数据目录、最大层级、中心经度、中心纬度、区域偏移（模型离地面高度）、是否有pbr纹理，，调用osgb_batch_convert进行批量分块转换；
 	*/
 	std::cout << "第二步，输出数据目录、最大层级、中心经度、中心纬度、区域偏移（模型离地面高度）、是否有pbr纹理，，调用osgb_batch_convert进行批量分块转换！" << endl;
-	unsigned int max_lvl = 20;
+	unsigned int max_lvl = 22;
 	double center_x = lon, center_y = lat, region_offset = 5;
 	bool pbr_texture = true;
 	string::size_type iPos = (mXMLFileName.find_last_of('\\') + 1) == 0 ? mXMLFileName.find_last_of('/') + 1 : mXMLFileName.find_last_of('\\') + 1;
@@ -1636,6 +1654,7 @@ int main()
 	/*
 	   第六步：遍历所有的任务对，对于每个任务对调用osgb23dtile_path函数进行转换，对每个任务对的结果生成TileResult（包含输出数据路径、json_buf、root_box）;
 	*/
+	
 	std::cout << "第六步：遍历所有的任务对，对于每个任务对调用osgb23dtile_path函数进行转换，对每个任务对的结果生成TileResult（包含输出数据路径、json_buf、root_box）！" << endl;
 	for (int i = 0; i < osgb_dir_pair.size(); i++)
 	{
@@ -1666,10 +1685,8 @@ int main()
 		size_t totalLength = json_buf.length();
 		std::cout << "长度为：" << totalLength << std::endl;
 
-		
-		
-		if (json_buf.length() <1)
-			std::cout << "第"<<i << "个转换failed!" << endl;
+		if (totalLength <1)
+			std::cout << "第"<<i << "个文件"<< osgb_dir_pair[i].in_dir<< "转换failed!" << endl;
 		else
 		{
 			std::cout << osgb_dir_pair[i].in_dir.c_str() << " ----> " << osgb_dir_pair[i].mid_dir.c_str() << endl;
@@ -1747,6 +1764,18 @@ int main()
 
 	transform_c(center_x, center_y, tras_height, &trans_vec[0]);
 	
+
+	std::cout << "transform矩阵为：" << std::endl;
+	for (int i = 0; i < trans_vec.size(); i++)
+	{
+		std::cout << trans_vec[i] << "," << std::endl;
+	}
+
+
+	//using nlohmann::json;
+
+	//json root_json;
+
 	float seconds = float(clock() - begin_time) / 1000;    //最小精度到ms
 	std::cout << "task over, cost " << seconds << "s" << endl;
 
