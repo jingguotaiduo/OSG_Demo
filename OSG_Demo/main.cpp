@@ -929,8 +929,9 @@ void write_osgGeometry(osg::Geometry* g, OsgBuildState* osgState)
 bool osgb2glb_buf(std::string path, std::string& glb_buff, MeshInfo& mesh_info) {
 	vector<string> fileNames = { path };
 	std::string parent_path = get_parent(path);
-	parent_path = parent_path.substr(0, parent_path.length() - 1);
 	cout << parent_path << endl;
+	/*parent_path = parent_path.substr(0, parent_path.length() - 1);
+	cout << parent_path << endl;*/
 
 	osg::ref_ptr<osg::Node> root = osgDB::readNodeFile(path);
 	//osg::ref_ptr<osg::Node> root = osgDB::readNodeFiles(fileNames);
@@ -1521,6 +1522,29 @@ int b3dmToGlb(std::string input, std::string output)
 	return 0;
 }
 
+
+// By JIAO Jingguo 2023.6.10
+vector<double> box_to_tileset_box(vector<double> box_v) {
+	vector<double> box_new;
+	box_new.push_back((box_v[0] + box_v[3]) / 2.0);
+	box_new.push_back((box_v[1] + box_v[4]) / 2.0);
+	box_new.push_back((box_v[2] + box_v[5]) / 2.0);
+
+	box_new.push_back((box_v[3] - box_v[0]) / 2.0);
+	box_new.push_back(0.0);
+	box_new.push_back(0.0);
+
+	box_new.push_back(0.0);
+	box_new.push_back((box_v[4] - box_v[1]) / 2.0);
+	box_new.push_back(0.0);
+
+	box_new.push_back(0.0);
+	box_new.push_back(0.0);
+	box_new.push_back((box_v[5] - box_v[2]) / 2.0);
+
+	return box_new;
+}
+
 //std::vector<unsigned char> jpeg_buf;
 //jpeg_buf.reserve(512 * 512 * 3);
 //for(int i=0;i<jpeg_buf.size();i++)
@@ -1582,7 +1606,7 @@ int main()
 	  第二步，输出数据目录、最大层级、中心经度、中心纬度、区域偏移（模型离地面高度）、是否有pbr纹理，，调用osgb_batch_convert进行批量分块转换；
 	*/
 	std::cout << "第二步，输出数据目录、最大层级、中心经度、中心纬度、区域偏移（模型离地面高度）、是否有pbr纹理，，调用osgb_batch_convert进行批量分块转换！" << endl;
-	unsigned int max_lvl = 22;
+	unsigned int max_lvl = 100;
 	double center_x = lon, center_y = lat, region_offset = 5;
 	bool pbr_texture = true;
 	string::size_type iPos = (mXMLFileName.find_last_of('\\') + 1) == 0 ? mXMLFileName.find_last_of('/') + 1 : mXMLFileName.find_last_of('\\') + 1;
@@ -1771,11 +1795,19 @@ int main()
 		std::cout << trans_vec[i] << "," << std::endl;
 	}
 
+	json root_json;
+	root_json["asset"]["version"] = "1.0";
+	root_json["asset"]["gltfUpAxis"] = "Z";
+	root_json["geometricError"] = 2000;
+	//root_json["root"]["transform"] = json::value(trans_vec);
+	//root_json["root"]["boundingVolume"]["box"] = json::value(box_to_tileset_box(&root_box));
+	//root_json["root"]["geometricError"] = json::value(trans_vec);
+	//root_json["root"]["children"] = json::value([]);// ;
 
-	//using nlohmann::json;
+	std::cout << root_json["geometricError"] << std::endl;   // null
+	std::cout << root_json["asset"]["version"] << std::endl;
 
-	//json root_json;
-
+	std::string out_dir = outputDir;
 	float seconds = float(clock() - begin_time) / 1000;    //最小精度到ms
 	std::cout << "task over, cost " << seconds << "s" << endl;
 
