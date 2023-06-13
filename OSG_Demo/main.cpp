@@ -1245,9 +1245,10 @@ void do_tile_job(osg_tree& tree, std::string out_path, int max_lvl) {
 	// write_file(out_file.c_str(), glb_buf.data(), glb_buf.size());
 	// end test
 
-	//for (auto& i : tree.sub_nodes) {
-	//	do_tile_job(i, out_path, max_lvl);
-	//}
+	// By JIAO Jingguo 2023.6.14 遍历子节点，如传入Tile_000_000.osgb，则遍历其子节点 Tile_000_000_L18.osgb
+	for (auto& i : tree.sub_nodes) {
+		do_tile_job(i, out_path, max_lvl);
+	}
 }
 
 void expend_box(TileBox& box, TileBox& box_new) {
@@ -1551,6 +1552,60 @@ vector<double> box_to_tileset_box(vector<double> box_v) {
 	return box_new;
 }
 
+size_t getStrLen_Official(std::string str)//计算字符串的长度
+{
+	return str.size();
+}
+
+std::string getFileSuffixFromStr_Official(std::string inputFileName)//获取文件的扩展名
+{
+	std::string suffix = "";
+	size_t lastDotPos = inputFileName.find_last_of('.');
+	size_t len = getStrLen_Official(inputFileName);
+	if (lastDotPos >= 0 && len > 1 && lastDotPos < len - 1)
+	{
+		std::string s(inputFileName, lastDotPos);
+		suffix += s;//inputFileName[lastDotPos, len - 1]
+	}
+	return suffix;
+}
+
+std::string getFileNameFromStr_Official(std::string inputFileName, bool isWithSuffix)//获取字符串中的文件名
+{
+	std::string filename = "", suffix = getFileSuffixFromStr_Official(inputFileName);
+	size_t lastDotPos = inputFileName.find_last_of('.'),
+		len = getStrLen_Official(inputFileName),
+		lastXiePos = -1,
+		lastXiePos1 = inputFileName.find_last_of('/'),
+		lastXiePos2 = inputFileName.find_last_of('\\');
+	if (lastXiePos1 > 0 && lastXiePos1 < len)
+		lastXiePos = lastXiePos1;
+	else if (lastXiePos2 > 0 && lastXiePos2 < len)
+		lastXiePos = lastXiePos2;
+
+	if (lastXiePos >= 0 && lastDotPos >= 0 && lastDotPos > lastXiePos + 1)
+	{
+		for (int i = lastXiePos+1; i <= lastDotPos; i++)
+			filename += inputFileName[i];
+	}
+	if (!isWithSuffix)
+		return filename;
+	else
+		return filename + suffix;
+}
+
+bool isContain_L(std::string str) //判断文件名是否包含_L，如 Tile_+000_+000_L15_0.osgb
+{
+	bool res = false;
+	for (int i = 0; i < str.size()-1; i++)
+	{
+		if (str[i] == '_' && str[i + 1] == 'L')
+		{
+			res = true;
+		}
+	}
+	return res;
+}
 //std::vector<unsigned char> jpeg_buf;
 //jpeg_buf.reserve(512 * 512 * 3);
 //for(int i=0;i<jpeg_buf.size();i++)
@@ -1650,15 +1705,22 @@ int main()
 		string replaceNewDataFileName = replace_all_distinct(temp[i], dataDirectory, outputDir + "\\Data");
 		string replaceNewDataFileName2 = replace_all_distinct(temp[i], dataDirectory, outputDir + "\\Data");
 		string::size_type dotPos = replaceNewDataFileName.find_last_of('.') + 1;
+
+		
+
 		if (dotPos && replaceNewDataFileName.substr(dotPos - 1, replaceNewDataFileName.length() - fileType.length()) == fileType) //如果后缀名为.osgb
 		{
-			string newFilename = replace_all_distinct(replaceNewDataFileName, fileType, newFileType);
-			string midFilename = replace_all_distinct(replaceNewDataFileName2, fileType, midFileType);
-			OsgbInfo osgbInfo;
-			osgbInfo.in_dir = tempStr;
-			osgbInfo.mid_dir = midFilename;
-			osgbInfo.out_dir = newFilename;
-			osgb_dir_pair.push_back(osgbInfo);
+			string file_Name = getFileNameFromStr_Official(tempStr, true);
+			if (! isContain_L(file_Name)) //当且仅当为不包含_L的osgb文件时才放入任务数组当中
+			{
+				string newFilename = replace_all_distinct(replaceNewDataFileName, fileType, newFileType);
+				string midFilename = replace_all_distinct(replaceNewDataFileName2, fileType, midFileType);
+				OsgbInfo osgbInfo;
+				osgbInfo.in_dir = tempStr;
+				osgbInfo.mid_dir = midFilename;
+				osgbInfo.out_dir = newFilename;
+				osgb_dir_pair.push_back(osgbInfo);
+			}
 		}
 		else //如果是文件夹，则创建新目录
 		{
@@ -1831,13 +1893,19 @@ int main()
 		std::cout << path << std::endl;
 		//json json_val = x.selfjson; //由于json解析出了点问题，暂时采用字符串的方式来实现tileset.json文件的生成
 		string json_val = x.selfjson;
-
+		std::cout << path + "对应的json字符串为\n"+json_val << std::endl;
 
 		std::string beforePath = out_dir;
 		std::string uriFilePath = replace_all_distinct(path, beforePath, ".");
 		uriFilePath = replace_all_distinct(uriFilePath, "\\", "/");
 
-
+		size_t jPosXie = uriFilePath.find_last_of('/');
+		/*std::cout << jPosXie << std::endl;*/
+		std::string cont_uri;
+		if (jPosXie != string::npos)
+		{
+			cont_uri.assign(uriFilePath, 0, jPosXie);
+		}
 		
 		/*json jg = json_val;
 		std::cout << jg << std::endl;*/
@@ -1861,8 +1929,8 @@ int main()
 		//	tile_object["boundingVolume"]["box"] = jg["boundingVolume"]["box"];// json_val;// tile_box;
 		//else
 			tile_object["boundingVolume"]["box"] = tile_box;
-		tile_object["content"]["uri"] = uriFilePath + "/tileset.json";
-		//std::cout << uriFilePath + "/tileset.json" << std::endl;
+		tile_object["content"]["uri"] = cont_uri + "/tileset.json";
+		std::cout << uriFilePath + "/tileset.json" << std::endl;
 
 		vector<json> childrenJson = root_json["root"]["children"];
 
@@ -1878,7 +1946,7 @@ int main()
 		finalPath = replace_all_distinct(finalPath, "\\", "/");
 
 		size_t jPos = finalPath.find_last_of('/');
-		std::cout << jPos << std::endl;
+		//std::cout << jPos << std::endl;
 		std::string out_jjgfile;
 		if (jPos != string::npos)
 		{
@@ -1886,6 +1954,7 @@ int main()
 		}
 
 		out_jjgfile += "/tileset.json";
+
 		std::ofstream outSubTileJSON(out_jjgfile, std::ios::out | std::ios::trunc);
 		outSubTileJSON << std::setw(4) << sub_tile << std::endl;
 	}
