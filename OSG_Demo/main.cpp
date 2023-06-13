@@ -42,9 +42,11 @@ using namespace std;
 //E:\jing_zhong\osg-install\lib; E:\jing_zhong\osg-install\include;
 
 using namespace std;
+//using json = nlohmann::json;
+using nlohmann::json;
+
 using namespace tinygltf;
 using namespace tinyxml2;
-
 /*
 //https://github.com/mapbox/earcut.hpp
 //https://github.com/nothings/stb single-file public domain (or MIT licensed) libraries for C/C++ By JIAO Jingguo 2023.4.26
@@ -53,7 +55,8 @@ using namespace tinyxml2;
 */
 
 struct TileResult {
-	json selfjson;
+	//json selfjson;
+	string selfjson;
 	string path;
 	std::vector<double> box_v;
 };
@@ -307,7 +310,7 @@ osg_tree get_all_tree(std::string& file_name) {
 double get_geometric_error(TileBox& bbox) {
 	if (bbox.max.empty() || bbox.min.empty())
 	{
-		LOG_E("bbox is empty!"); //By JIAO Jingguo 2023.6.9
+		LOG_E("计算几何误差发现 bbox is empty!"); //By JIAO Jingguo 2023.6.9
 		return 0;
 	}
 
@@ -1104,7 +1107,7 @@ bool osgb2glb_buf(std::string path, std::string& glb_buff, MeshInfo& mesh_info) 
 		}
 	}
 	model.asset.version = "2.0";
-	model.asset.generator = "fanvanzh";
+	model.asset.generator = "fanvanzh-jjg";
 
 	glb_buff = gltf.Serialize(&model);
 	return true;
@@ -1232,6 +1235,7 @@ void do_tile_job(osg_tree& tree, std::string out_path, int max_lvl) {
 
 	if (!b3dm_buf.empty()) {
 		write_file(out_file.c_str(), b3dm_buf.data(), b3dm_buf.size());
+		std::cout << "写入b3dm文件：" << out_file << std::endl;
 	}
 	// test
 	// std::string glb_buf;
@@ -1240,9 +1244,10 @@ void do_tile_job(osg_tree& tree, std::string out_path, int max_lvl) {
 	// out_file = replace(out_file, ".b3dm", ".glb");
 	// write_file(out_file.c_str(), glb_buf.data(), glb_buf.size());
 	// end test
-	for (auto& i : tree.sub_nodes) {
-		do_tile_job(i, out_path, max_lvl);
-	}
+
+	//for (auto& i : tree.sub_nodes) {
+	//	do_tile_job(i, out_path, max_lvl);
+	//}
 }
 
 void expend_box(TileBox& box, TileBox& box_new) {
@@ -1336,8 +1341,8 @@ void* osgb23dtile_path(const char* in_path, const char* out_path,
 	double *box, size_t* len, double x, double y,
 	int max_lvl, bool pbr_texture)
 {
-	std::string path =in_path;
-	std::cout << path << std::endl;
+	std::string path = in_path;
+	std::cout << "开始处理："<<path << std::endl;
 	osg_tree root = get_all_tree(path);
 	if (root.file_name.empty())
 	{
@@ -1349,20 +1354,21 @@ void* osgb23dtile_path(const char* in_path, const char* out_path,
 	extend_tile_box(root);
 	if (root.bbox.max.empty() || root.bbox.min.empty())
 	{
+		std::cout << in_path;
 		LOG_E("[%s] bbox is empty!", in_path);
 		return NULL;
 	}
 	// prevent for root node disappear
 	calc_geometric_error(root);
 	root.geometricError = 1000.0;
-	std::string json = encode_tile_json(root, x, y);
+	std::string tile_json = encode_tile_json(root, x, y);
 	/*std::cout << "结果为：" << json << std::endl;*/
 	root.bbox.extend(0.2);
 	memcpy(box, root.bbox.max.data(), 3 * sizeof(double));
 	memcpy(box + 3, root.bbox.min.data(), 3 * sizeof(double));
-	void* str = malloc(json.length());
-	memcpy(str, json.c_str(), json.length());
-	*len = json.length();
+	void* str = malloc(tile_json.length());
+	memcpy(str, tile_json.c_str(), tile_json.length());
+	*len = tile_json.length();
 	return str;
 }
 
@@ -1555,7 +1561,7 @@ int main()
 {
 	const clock_t begin_time = clock();
 	std::cout << "This is JIAO Jingguo's OSG Demo Program(------2023.5.28)!" << std::endl;
-	string inputFolder = "E:\\KY_work\\Production_3", outputDir = "E:\\KY_work\\Production_3-Test";
+	string inputFolder = "E:\\KY_work\\Production_3_less", outputDir = "E:\\KY_work\\Production_3-JJGTest1";
 	/*inputFolder = "E:\\KY_work\\Production_3_tiles3d"; outputDir = "E:\\KY_work\\Production_3-GLB";
 	inputFolder = "E:\\KY_work\\Production_3-GLB"; outputDir = "E:\\KY_work\\Production_3-GLTF";*/
 	if (!isDirExist(inputFolder)) return 0;
@@ -1606,7 +1612,7 @@ int main()
 	  第二步，输出数据目录、最大层级、中心经度、中心纬度、区域偏移（模型离地面高度）、是否有pbr纹理，，调用osgb_batch_convert进行批量分块转换；
 	*/
 	std::cout << "第二步，输出数据目录、最大层级、中心经度、中心纬度、区域偏移（模型离地面高度）、是否有pbr纹理，，调用osgb_batch_convert进行批量分块转换！" << endl;
-	unsigned int max_lvl = 100;
+	unsigned int max_lvl = 100;//100
 	double center_x = lon, center_y = lat, region_offset = 5;
 	bool pbr_texture = true;
 	string::size_type iPos = (mXMLFileName.find_last_of('\\') + 1) == 0 ? mXMLFileName.find_last_of('/') + 1 : mXMLFileName.find_last_of('\\') + 1;
@@ -1653,7 +1659,6 @@ int main()
 			osgbInfo.mid_dir = midFilename;
 			osgbInfo.out_dir = newFilename;
 			osgb_dir_pair.push_back(osgbInfo);
-
 		}
 		else //如果是文件夹，则创建新目录
 		{
@@ -1705,7 +1710,7 @@ int main()
 		Res = (char *)res;
 		/*std::string *Res = static_cast<std::string*>(res);*/// https://stackoverflow.com/questions/3076968/converting-a-void-to-a-stdstring
 		std::string json_buf = Res;
-		std::cout << json_buf << std::endl;
+		/*std::cout << json_buf << std::endl;*/
 		size_t totalLength = json_buf.length();
 		std::cout << "长度为：" << totalLength << std::endl;
 
@@ -1713,8 +1718,9 @@ int main()
 			std::cout << "第"<<i << "个文件"<< osgb_dir_pair[i].in_dir<< "转换failed!" << endl;
 		else
 		{
-			std::cout << osgb_dir_pair[i].in_dir.c_str() << " ----> " << osgb_dir_pair[i].mid_dir.c_str() << endl;
-			std::cout << osgb_dir_pair[i].mid_dir.c_str() << " ----> " << osgb_dir_pair[i].out_dir.c_str() << endl;
+			/*std::cout << osgb_dir_pair[i].in_dir.c_str() << " ----> " << osgb_dir_pair[i].mid_dir.c_str() << endl;
+			std::cout << osgb_dir_pair[i].mid_dir.c_str() << " ----> " << osgb_dir_pair[i].out_dir.c_str() << endl;*/
+			std::cout << osgb_dir_pair[i].in_dir.c_str() << " ----> " << osgb_dir_pair[i].out_dir.c_str() << endl;
 			vector<double>	box_v;
 			box_v.push_back(*root_box); box_v.push_back(*(root_box + 1)); box_v.push_back(*(root_box + 2));
 			box_v.push_back(*(root_box + 3)); box_v.push_back(*(root_box + 4)); box_v.push_back(*(root_box + 5)); //https://stackoverflow.com/questions/56129043/converting-double-to-stdvectordouble-gives-me-error
@@ -1740,10 +1746,15 @@ int main()
 		//glbToGltf(osgb_dir_pair[i].in_dir, osgb_dir_pair[i].out_dir);
 	}
 	
+
+
+	std::cout << "开始生成tileset.json" << std::endl;
+
 	vector<TileResult> tile_array;
 	for (int i = 0; i < osgb_dir_pair.size(); i++)
 	{
-		if (!osgb_dir_pair[i].sender.selfjson.is_null())
+		if (osgb_dir_pair[i].sender.selfjson.size() > 0)
+		/*if (!osgb_dir_pair[i].sender.selfjson.is_null())*/
 		{
 			tile_array.push_back(osgb_dir_pair[i].sender);
 		}
@@ -1795,22 +1806,98 @@ int main()
 		std::cout << trans_vec[i] << "," << std::endl;
 	}
 
+	vector<double> tileset_box = box_to_tileset_box(root_box);
+
 	json root_json;
 	root_json["asset"]["version"] = "1.0";
 	root_json["asset"]["gltfUpAxis"] = "Z";
 	root_json["geometricError"] = 2000;
-	//root_json["root"]["transform"] = json::value(trans_vec);
-	//root_json["root"]["boundingVolume"]["box"] = json::value(box_to_tileset_box(&root_box));
-	//root_json["root"]["geometricError"] = json::value(trans_vec);
-	//root_json["root"]["children"] = json::value([]);// ;
+	root_json["root"]["transform"] = trans_vec;
+	root_json["root"]["boundingVolume"]["box"] = tileset_box;
+	root_json["root"]["geometricError"] = 2000;
+
+	vector<json> children;
+	root_json["root"]["children"] = children;// json::array();// ;
 
 	std::cout << root_json["geometricError"] << std::endl;   // null
 	std::cout << root_json["asset"]["version"] << std::endl;
 
 	std::string out_dir = outputDir;
+
+	for (int i = 0; i < tile_array.size(); i++)
+	{
+		TileResult x = tile_array[i];
+		std::string path = x.path;
+		std::cout << path << std::endl;
+		//json json_val = x.selfjson; //由于json解析出了点问题，暂时采用字符串的方式来实现tileset.json文件的生成
+		string json_val = x.selfjson;
+
+
+		std::string beforePath = out_dir;
+		std::string uriFilePath = replace_all_distinct(path, beforePath, ".");
+		uriFilePath = replace_all_distinct(uriFilePath, "\\", "/");
+
+
+		
+		/*json jg = json_val;
+		std::cout << jg << std::endl;*/
+		//std::ofstream tempOutjsonFile("tempJJG.json", std::ios::out | std::ios::trunc);
+		//tempOutjsonFile << std::setw(4) << json_val << std::endl;
+
+		//std::ifstream f("tempJJG.json");// 读取一个json文件，nlohmann会自动解析其中数据
+		//json jg = json::parse(f);
+
+		//std::cout << jg << std::endl;
+		/*std::cout << jg["boundingVolume"] << std::endl;*/
+		/*std::cout << jg["boundingVolume"]["box"] << std::endl;*/
+		//auto boundingBox = json_val["boundingVolume"]["box"];
+		//vector<double> tile_BoundingBox = boundingBox;
+		
+		json tile_object;
+		tile_object["geometricError"] = 1000;
+
+		vector<double> tile_box = { 1,2,3,1,0,0, 0,1,0,0,0,1 };
+		//if(jg["boundingVolume"] && jg["boundingVolume"].size() > 0 && jg["boundingVolume"]["box"] && jg["boundingVolume"]["box"].size() > 0)
+		//	tile_object["boundingVolume"]["box"] = jg["boundingVolume"]["box"];// json_val;// tile_box;
+		//else
+			tile_object["boundingVolume"]["box"] = tile_box;
+		tile_object["content"]["uri"] = uriFilePath + "/tileset.json";
+		//std::cout << uriFilePath + "/tileset.json" << std::endl;
+
+		vector<json> childrenJson = root_json["root"]["children"];
+
+		childrenJson.push_back(tile_object);
+		root_json["root"]["children"] = childrenJson;
+		json sub_tile;
+		sub_tile["asset"]["version"] = "1.0";
+		sub_tile["asset"]["gltfUpAxis"] = "Z";
+		sub_tile["geometricError"] = 1000;
+		//sub_tile["root"] = json_val;
+		
+		std::string finalPath = x.path;
+		finalPath = replace_all_distinct(finalPath, "\\", "/");
+
+		size_t jPos = finalPath.find_last_of('/');
+		std::cout << jPos << std::endl;
+		std::string out_jjgfile;
+		if (jPos != string::npos)
+		{
+			out_jjgfile.assign(finalPath, 0, jPos);
+		}
+
+		out_jjgfile += "/tileset.json";
+		std::ofstream outSubTileJSON(out_jjgfile, std::ios::out | std::ios::trunc);
+		outSubTileJSON << std::setw(4) << sub_tile << std::endl;
+	}
+
+
+	std::string RootPath = outputDir;
+	std::string path_json = replace_all_distinct(RootPath, "\\", "/") + "/tileset.json";//.replace("\\", "/")
+	std::ofstream outRootJSON(path_json, std::ios::out | std::ios::trunc);
+	outRootJSON << std::setw(4) << root_json << std::endl;
 	float seconds = float(clock() - begin_time) / 1000;    //最小精度到ms
 	std::cout << "task over, cost " << seconds << "s" << endl;
-
+	std::cout << "osgb转3dtiles结束 By JIAO Jingguo 2023.6.11" << std::endl;
 
 	//std::string nodeFileName = "E:\\jing_zhong\\OSG_Demo\\x64\\Release\\cow.osg";// "E:\\jing_zhong\\3dtiles\\data\\test\\test.osgb";
 	//osg::ref_ptr<osg::Node> root = osgDB::readNodeFile(nodeFileName);
@@ -2037,6 +2124,5 @@ int main()
 	//	osg::ref_ptr<osg::Node> root = osgDB::readNodeFiles(osgbfiles);
 	//	view.setSceneData(root);
 	//}
-	system("pause");
 	return view.run();
 }
