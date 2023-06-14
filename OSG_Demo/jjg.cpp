@@ -93,7 +93,7 @@ double meter_to_longti(double m, double lati)
 bool write_file(std::string filename, std::string content)
 {
 	std::ofstream ofs;
-	ofs.open(filename, std::ios::app);
+	ofs.open(filename, std::ios::out | std::ios::trunc);//std::ios::app
 	const char *Content = &content[0];
 	ofs << Content;
 	ofs.close();

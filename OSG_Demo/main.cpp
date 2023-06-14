@@ -1363,7 +1363,7 @@ void* osgb23dtile_path(const char* in_path, const char* out_path,
 	calc_geometric_error(root);
 	root.geometricError = 1000.0;
 	std::string tile_json = encode_tile_json(root, x, y);
-	/*std::cout << "结果为：" << json << std::endl;*/
+	std::cout << "结果为：" << tile_json << std::endl;
 	root.bbox.extend(0.2);
 	memcpy(box, root.bbox.max.data(), 3 * sizeof(double));
 	memcpy(box + 3, root.bbox.min.data(), 3 * sizeof(double));
@@ -1371,6 +1371,40 @@ void* osgb23dtile_path(const char* in_path, const char* out_path,
 	memcpy(str, tile_json.c_str(), tile_json.length());
 	*len = tile_json.length();
 	return str;
+}
+
+// 自定义返回字符串函数
+std::string osgb23dtile_pathJJG(const char* in_path, const char* out_path,
+	double *box, size_t* len, double x, double y,
+	int max_lvl, bool pbr_texture)
+{
+	std::string path = in_path;
+	std::cout << "开始处理：" << path << std::endl;
+	osg_tree root = get_all_tree(path);
+	if (root.file_name.empty())
+	{
+		LOG_E("open file [%s] fail!", in_path);
+		return NULL;
+	}
+	bool b_pbr_texture = pbr_texture;
+	do_tile_job(root, out_path, max_lvl);
+	extend_tile_box(root);
+	if (root.bbox.max.empty() || root.bbox.min.empty())
+	{
+		std::cout << in_path;
+		LOG_E("[%s] bbox is empty!", in_path);
+		return NULL;
+	}
+	// prevent for root node disappear
+	calc_geometric_error(root);
+	root.geometricError = 1000.0;
+	std::string tile_json = encode_tile_json(root, x, y);
+	std::cout << "结果为：" << tile_json << std::endl;
+	root.bbox.extend(0.2);
+	memcpy(box, root.bbox.max.data(), 3 * sizeof(double));
+	memcpy(box + 3, root.bbox.min.data(), 3 * sizeof(double));
+	*len = tile_json.length();
+	return tile_json;
 }
 
 
@@ -1759,8 +1793,31 @@ int main()
 		
 		size_t json_len = 0;
 		
-		//std::string& b3dm_buf = osgb_dir_pair[i].out_dir;
-		void* res = osgb23dtile_path(&osgb_dir_pair[i].in_dir[0],
+		////std::string& b3dm_buf = osgb_dir_pair[i].out_dir;
+		//void* res = osgb23dtile_path(&osgb_dir_pair[i].in_dir[0],
+		//				&osgb_dir_pair[i].out_dir[0],
+		//				root_box,
+		//				&json_len,
+		//				rad_x,
+		//				rad_y,
+		//				max_lvl,
+		//				pbr_texture);
+		//char * Res;
+		//Res = (char *)res;
+		///*std::string *Res = static_cast<std::string*>(res);*/// https://stackoverflow.com/questions/3076968/converting-a-void-to-a-stdstring
+		//std::string json_buf = Res;
+		///*std::cout << json_buf << std::endl;*/
+
+		//size_t lastBigKuoHaoIndex = json_buf.find_last_of('}'); // By JIAO Jingguo 2023.6.14 由于json_buf最后几个字符存在乱码，经分析从开头截取到最后一个}为有效字符串
+		//std::string deal_json_buf;
+		//if (lastBigKuoHaoIndex != string::npos)
+		//{
+		//	deal_json_buf.assign(json_buf, 0, lastBigKuoHaoIndex);
+		//	deal_json_buf += "}";
+		//	deal_json_buf = replace_all_distinct(deal_json_buf, "\\", "");
+		//}
+		//std::cout << deal_json_buf << std::endl;
+		std::string json_buf = osgb23dtile_pathJJG(&osgb_dir_pair[i].in_dir[0],
 						&osgb_dir_pair[i].out_dir[0],
 						root_box,
 						&json_len,
@@ -1768,11 +1825,8 @@ int main()
 						rad_y,
 						max_lvl,
 						pbr_texture);
-		char * Res;
-		Res = (char *)res;
-		/*std::string *Res = static_cast<std::string*>(res);*/// https://stackoverflow.com/questions/3076968/converting-a-void-to-a-stdstring
-		std::string json_buf = Res;
-		/*std::cout << json_buf << std::endl;*/
+		
+
 		size_t totalLength = json_buf.length();
 		std::cout << "长度为：" << totalLength << std::endl;
 
@@ -1790,6 +1844,7 @@ int main()
 			t.box_v = box_v;
 			t.path = osgb_dir_pair[i].out_dir;
 			t.selfjson = json_buf;
+			//t.selfjson = deal_json_buf;
 			osgb_dir_pair[i].sender = t;
 		}
 		
@@ -1893,7 +1948,7 @@ int main()
 		std::cout << path << std::endl;
 		//json json_val = x.selfjson; //由于json解析出了点问题，暂时采用字符串的方式来实现tileset.json文件的生成
 		string json_val = x.selfjson;
-		std::cout << path + "对应的json字符串为\n"+json_val << std::endl;
+		//std::cout << path + "对应的json字符串为\n"+json_val.dump() << std::endl;
 
 		std::string beforePath = out_dir;
 		std::string uriFilePath = replace_all_distinct(path, beforePath, ".");
@@ -1907,28 +1962,24 @@ int main()
 			cont_uri.assign(uriFilePath, 0, jPosXie);
 		}
 		
-		/*json jg = json_val;
-		std::cout << jg << std::endl;*/
-		//std::ofstream tempOutjsonFile("tempJJG.json", std::ios::out | std::ios::trunc);
-		//tempOutjsonFile << std::setw(4) << json_val << std::endl;
+		write_file("tempJJG2.json", x.selfjson);
+		/*std::ofstream tempOutjsonFile("tempJJG.json", std::ios::out | std::ios::trunc);
+		tempOutjsonFile << std::setw(4) << json_val << std::endl;*/
 
-		//std::ifstream f("tempJJG.json");// 读取一个json文件，nlohmann会自动解析其中数据
-		//json jg = json::parse(f);
+		std::ifstream f("tempJJG2.json");// 读取一个json文件，nlohmann会自动解析其中数据
+		json jg = json::parse(f);
+		//if (jg.contains("boundingVolume"))
+		//{
+		//	std::cout << jg["boundingVolume"] << std::endl;
+		//	std::cout << jg["boundingVolume"]["box"] << std::endl;
+		//}
 
-		//std::cout << jg << std::endl;
-		/*std::cout << jg["boundingVolume"] << std::endl;*/
-		/*std::cout << jg["boundingVolume"]["box"] << std::endl;*/
-		//auto boundingBox = json_val["boundingVolume"]["box"];
-		//vector<double> tile_BoundingBox = boundingBox;
-		
 		json tile_object;
 		tile_object["geometricError"] = 1000;
 
-		vector<double> tile_box = { 1,2,3,1,0,0, 0,1,0,0,0,1 };
-		//if(jg["boundingVolume"] && jg["boundingVolume"].size() > 0 && jg["boundingVolume"]["box"] && jg["boundingVolume"]["box"].size() > 0)
-		//	tile_object["boundingVolume"]["box"] = jg["boundingVolume"]["box"];// json_val;// tile_box;
-		//else
-			tile_object["boundingVolume"]["box"] = tile_box;
+		//vector<double> tile_box = { 1,2,3,1,0,0, 0,1,0,0,0,1 };
+		if (jg.contains("boundingVolume"))
+			tile_object["boundingVolume"]["box"] = jg["boundingVolume"]["box"];// tile_box;
 		tile_object["content"]["uri"] = cont_uri + "/tileset.json";
 		std::cout << uriFilePath + "/tileset.json" << std::endl;
 
@@ -1940,7 +1991,7 @@ int main()
 		sub_tile["asset"]["version"] = "1.0";
 		sub_tile["asset"]["gltfUpAxis"] = "Z";
 		sub_tile["geometricError"] = 1000;
-		//sub_tile["root"] = json_val;
+		sub_tile["root"] = jg;// json_val;
 		
 		std::string finalPath = x.path;
 		finalPath = replace_all_distinct(finalPath, "\\", "/");
