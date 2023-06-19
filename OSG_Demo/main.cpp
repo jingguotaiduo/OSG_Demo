@@ -513,6 +513,8 @@ std::string tech_string() {
 })";
 }
 
+
+// 自定义shader By JIAO Jingguo 2023.6.20 是一个非常有用的东西
 void make_gltf2_shader(tinygltf::Model& model, int mat_size, tinygltf::Buffer& buffer) {
 	model.extensionsRequired = { "KHR_techniques_webgl" };
 	model.extensionsUsed = { "KHR_techniques_webgl" };
@@ -568,7 +570,7 @@ void make_gltf2_shader(tinygltf::Model& model, int mat_size, tinygltf::Buffer& b
 	for (int i = 0; i < mat_size; i++)
 	{
 		tinygltf::Material material;
-		material.name = "osgb";
+		//material.name = "osgb"; //By JIAO Jingguo 2023.6.20 经调试发现此行代码并无实际用处
 		char shaderBuffer[512];
 		sprintf(shaderBuffer, R"(
 {
@@ -586,6 +588,10 @@ void make_gltf2_shader(tinygltf::Model& model, int mat_size, tinygltf::Buffer& b
 }
 )", i);
 		material.shaderMaterial = shaderBuffer;
+		/*material.extensionsJJG.KHR_techniques_webgl.technique = 0;
+		material.extensionsJJG.KHR_techniques_webgl.values.u_diffuse.index = i;
+		material.extensionsJJG.KHR_techniques_webgl.values.u_diffuse.texCoord = 0;*/
+
 		model.materials.push_back(material);
 	}
 }
@@ -1245,18 +1251,26 @@ bool osgb2glb_buf(std::string path, std::string& glb_buff, MeshInfo& mesh_info) 
 		sample.wrapT = TINYGLTF_TEXTURE_WRAP_REPEAT;
 		model.samplers = { sample };
 	}
-	// use KHR_materials_unlit
-	model.extensionsRequired = { "KHR_materials_unlit" };
-	model.extensionsUsed = { "KHR_materials_unlit" };
-	for (int i = 0; i < infoVisitor.texture_array.size(); i++)
-	{
-		tinygltf::Material mat = make_color_material_osgb(1.0, 1.0, 1.0);
-		mat.b_unlit = true; // use KHR_materials_unlit
-		tinygltf::Parameter baseColorTexture;
-		baseColorTexture.json_int_value = { std::pair<string,int>("index",i) };
-		mat.values["baseColorTexture"] = baseColorTexture;
-		model.materials.push_back(mat);
-	}
+
+
+	make_gltf2_shader(model, infoVisitor.texture_array.size(), buffer);// By JIAO Jingguo 2023.6.20 开始测试shader材质纹理
+
+	// use KHR_materials_unlit By JIAO Jingguo 2023.6.20 亲测能生成纯白色的纹理材质 暂时注释如下12行代码
+	//model.extensionsRequired = { "KHR_materials_unlit" };
+	//model.extensionsUsed = { "KHR_materials_unlit" };
+	//for (int i = 0; i < infoVisitor.texture_array.size(); i++)
+	//{
+	//	//tinygltf::Material mat = make_color_material_osgb(1.0, 1.0, 1.0);//白色纯色材质
+	//	tinygltf::Material mat = make_color_material_osgb(0.0, 0.0, 1.0);//蓝色纯色材质 By JIAO Jingguo 2023.6.19
+	//	mat.b_unlit = true; // use KHR_materials_unlit
+	//	tinygltf::Parameter baseColorTexture;
+	//	baseColorTexture.json_int_value = { std::pair<string,int>("index",i) };
+	//	mat.values["baseColorTexture"] = baseColorTexture;
+	//	model.materials.push_back(mat);
+	//}
+
+
+
 
 	// finish buffer
 	model.buffers.push_back(std::move(buffer));
@@ -1815,7 +1829,7 @@ int main()
 {
 	const clock_t begin_time = clock();
 	std::cout << "This is JIAO Jingguo's OSG Demo Program(------2023.5.28)!" << std::endl;
-	string inputFolder = "E:\\KY_work\\Production_3_less", outputDir = "E:\\KY_work\\Production_3-JJGTest618";
+	string inputFolder = "E:\\KY_work\\Production_3_less", outputDir = "E:\\KY_work\\Production_3-JJGTestShader2";
 	/*inputFolder = "E:\\KY_work\\Production_3_tiles3d"; outputDir = "E:\\KY_work\\Production_3-GLB";
 	inputFolder = "E:\\KY_work\\Production_3-GLB"; outputDir = "E:\\KY_work\\Production_3-GLTF";*/
 	if (!isDirExist(inputFolder)) return 0;

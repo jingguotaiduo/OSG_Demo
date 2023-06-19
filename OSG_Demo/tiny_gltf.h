@@ -803,6 +803,23 @@ namespace tinygltf {
 			bool operator==(const PbrMetallicRoughness &) const;
 	};
 
+
+	// By JIAO Jingguo 2023.6.20 添加如下四个结构体
+	struct u_diffuse2 {
+		int index;
+		int texCoord;
+	};
+	struct values2 {
+		u_diffuse2 u_diffuse;
+	};
+	struct KHR_techniques_webgl2 {
+		int technique;
+		values2 values;
+	};
+	struct Extension2 {
+		KHR_techniques_webgl2 KHR_techniques_webgl;
+	};
+	
 	// Each extension should be stored in a ParameterMap.
 	// members not in the values could be included in the ParameterMap
 	// to keep a single material model
@@ -828,6 +845,9 @@ namespace tinygltf {
 		ParameterMap additionalValues;
 
 		ExtensionMap extensions;
+
+		Extension2 extensionsJJG; // By JIAO Jingguo 2023.6.20 自行添加一个属性
+
 		Value extras;
 		bool  b_unlit = false;  // use KHR_materials_unlit
 
@@ -8164,7 +8184,17 @@ namespace tinygltf {
 			for (unsigned int i = 0; i < model->materials.size(); ++i) {
 				json material;
 				SerializeGltfMaterial(model->materials[i], material);
-				materials.push_back(material);
+
+				std::cout << model->materials[i].shaderMaterial << std::endl;
+
+				if (model->materials[i].shaderMaterial != "") //自己构造的生成纹理Shader的material By JIAO Jingguo 2023.6.20
+				{
+					json jg_material;
+					jg_material = json::parse(model->materials[i].shaderMaterial);
+					materials.push_back(jg_material);
+				}
+				else
+					materials.push_back(material);
 			}
 			output["materials"] = materials;
 		}
