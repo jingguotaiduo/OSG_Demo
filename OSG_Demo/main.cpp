@@ -425,6 +425,171 @@ void alignment_buffer(std::vector<T>& buf) {
 	}
 }
 
+std::string vs_str() {
+	return
+		R"(
+precision highp float;
+uniform mat4 u_modelViewMatrix;
+uniform mat4 u_projectionMatrix;
+attribute vec3 a_position;
+attribute vec2 a_texcoord0;
+attribute float a_batchid;
+varying vec2 v_texcoord0;
+void main(void)
+{
+    v_texcoord0 = a_texcoord0;
+    gl_Position = u_projectionMatrix * u_modelViewMatrix * vec4(a_position, 1.0);
+}
+)";
+}
+
+std::string fs_str() {
+	return
+		R"(
+precision highp float;
+varying vec2 v_texcoord0;
+uniform sampler2D u_diffuse;
+void main(void)
+{
+  gl_FragColor = texture2D(u_diffuse, v_texcoord0);
+}
+)";
+}
+
+std::string program(int vs, int fs) {
+	char buf[512];
+	std::string fmt = R"(
+{
+"attributes": [
+"a_position",
+"a_texcoord0"
+],
+"vertexShader": %d,
+"fragmentShader": %d
+}
+)";
+	sprintf(buf, fmt.data(), vs, fs);
+	return buf;
+}
+
+std::string tech_string() {
+	return
+		R"(
+{
+  "attributes": {
+    "a_batchid": {
+      "semantic": "_BATCHID",
+      "type": 5123
+    },
+    "a_position": {
+      "semantic": "POSITION",
+      "type": 35665
+    },
+    "a_texcoord0": {
+      "semantic": "TEXCOORD_0",
+      "type": 35664
+    }
+  },
+  "program": 0,
+  "states": {
+    "enable": [
+      2884,
+      2929
+    ]
+  },
+  "uniforms": {
+    "u_diffuse": {
+      "type": 35678
+    },
+    "u_modelViewMatrix": {
+      "semantic": "MODELVIEW",
+      "type": 35676
+    },
+    "u_projectionMatrix": {
+      "semantic": "PROJECTION",
+      "type": 35676
+    }
+  }
+})";
+}
+
+void make_gltf2_shader(tinygltf::Model& model, int mat_size, tinygltf::Buffer& buffer) {
+	model.extensionsRequired = { "KHR_techniques_webgl" };
+	model.extensionsUsed = { "KHR_techniques_webgl" };
+	// add vs shader
+	{
+		tinygltf::BufferView bfv_vs;
+		bfv_vs.buffer = 0;
+		bfv_vs.byteOffset = buffer.data.size();
+		bfv_vs.target = TINYGLTF_TARGET_ARRAY_BUFFER;
+
+		std::string vs_shader = vs_str();
+
+		buffer.data.insert(buffer.data.end(), vs_shader.begin(), vs_shader.end());
+		bfv_vs.byteLength = vs_shader.size();
+		alignment_buffer(buffer.data);
+		model.bufferViews.push_back(bfv_vs);
+
+		tinygltf::Shader shader;
+		shader.bufferView = model.bufferViews.size() - 1;
+		shader.type = TINYGLTF_SHADER_TYPE_VERTEX_SHADER;
+		model.extensionsJJG.KHR_techniques_webgl.shaders.push_back(shader);
+	}
+	// add fs shader
+	{
+		tinygltf::BufferView bfv_fs;
+		bfv_fs.buffer = 0;
+		bfv_fs.byteOffset = buffer.data.size();
+		bfv_fs.target = TINYGLTF_TARGET_ARRAY_BUFFER;
+		std::string fs_shader = fs_str();
+		buffer.data.insert(buffer.data.end(), fs_shader.begin(), fs_shader.end());
+		bfv_fs.byteLength = fs_shader.size();
+		alignment_buffer(buffer.data);
+		model.bufferViews.push_back(bfv_fs);
+
+		tinygltf::Shader shader;
+		shader.bufferView = model.bufferViews.size() - 1;
+		shader.type = TINYGLTF_SHADER_TYPE_FRAGMENT_SHADER;
+		model.extensionsJJG.KHR_techniques_webgl.shaders.push_back(shader);
+	}
+	// tech
+	{
+		tinygltf::Technique tech;
+		tech.tech_string = tech_string();
+		model.extensionsJJG.KHR_techniques_webgl.techniques = { tech };
+	}
+	// program
+	{
+		tinygltf::Program prog;
+		prog.prog_string = program(0, 1);
+		model.extensionsJJG.KHR_techniques_webgl.programs = { prog };
+	}
+
+	for (int i = 0; i < mat_size; i++)
+	{
+		tinygltf::Material material;
+		material.name = "osgb";
+		char shaderBuffer[512];
+		sprintf(shaderBuffer, R"(
+{
+"extensions": {
+"KHR_techniques_webgl": {
+"technique": 0,
+"values": {
+"u_diffuse": {
+"index": %d,
+"texCoord": 0
+}
+}
+}
+}
+}
+)", i);
+		material.shaderMaterial = shaderBuffer;
+		model.materials.push_back(material);
+	}
+}
+
 struct OsgBuildState
 {
 	tinygltf::Buffer* buffer;
@@ -1650,7 +1815,7 @@ int main()
 {
 	const clock_t begin_time = clock();
 	std::cout << "This is JIAO Jingguo's OSG Demo Program(------2023.5.28)!" << std::endl;
-	string inputFolder = "E:\\KY_work\\Production_3_less", outputDir = "E:\\KY_work\\Production_3-JJGTest1";
+	string inputFolder = "E:\\KY_work\\Production_3_less", outputDir = "E:\\KY_work\\Production_3-JJGTest618";
 	/*inputFolder = "E:\\KY_work\\Production_3_tiles3d"; outputDir = "E:\\KY_work\\Production_3-GLB";
 	inputFolder = "E:\\KY_work\\Production_3-GLB"; outputDir = "E:\\KY_work\\Production_3-GLTF";*/
 	if (!isDirExist(inputFolder)) return 0;
@@ -2014,7 +2179,7 @@ int main()
 	std::string RootPath = outputDir;
 	std::string path_json = replace_all_distinct(RootPath, "\\", "/") + "/tileset.json";//.replace("\\", "/")
 	std::ofstream outRootJSON(path_json, std::ios::out | std::ios::trunc);
-	outRootJSON << std::setw(4) << root_json << std::endl;
+	outRootJSON << std::setw(2) << root_json << std::endl;// std::setw(4)
 	float seconds = float(clock() - begin_time) / 1000;    //最小精度到ms
 	std::cout << "task over, cost " << seconds << "s" << endl;
 	std::cout << "osgb转3dtiles结束 By JIAO Jingguo 2023.6.11" << std::endl;

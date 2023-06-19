@@ -710,6 +710,21 @@ namespace tinygltf {
 			bool operator==(const Texture &) const;
 	};
 
+	// By JIAO Jingguo 2023.6.18 添加Shader、Technique和Program
+	struct Shader {
+		int bufferView;
+		int type;
+	};
+
+	struct Technique
+	{
+		std::string tech_string; // use string tech temp
+	};
+
+	struct Program {
+		std::string prog_string; // use string program temp
+	};
+
 	struct TextureInfo {
 		int index = -1;  // required.
 		int texCoord;    // The set index of texture's TEXCOORD attribute used for
@@ -793,6 +808,8 @@ namespace tinygltf {
 	// to keep a single material model
 	struct Material {
 		std::string name;
+
+		std::string shaderMaterial;
 
 		std::vector<double> emissiveFactor;  // length 3. default [0, 0, 0]
 		std::string alphaMode;               // default "OPAQUE"
@@ -1158,6 +1175,17 @@ namespace tinygltf {
 		std::string extensions_json_string;
 	};
 
+	struct KHR {
+		//
+		std::vector<Program> programs;
+		std::vector<Shader> shaders;
+		std::vector<Technique> techniques;
+	};
+
+	struct Extension {
+		KHR KHR_techniques_webgl;
+	};
+
 	class Model {
 	public:
 		Model() = default;
@@ -1179,6 +1207,10 @@ namespace tinygltf {
 		std::vector<Camera> cameras;
 		std::vector<Scene> scenes;
 		std::vector<Light> lights;
+
+		//
+		Extension extensionsJJG;
+		//
 
 		int defaultScene = -1;
 		std::vector<std::string> extensionsUsed;
@@ -8136,44 +8168,46 @@ namespace tinygltf {
 			}
 			output["materials"] = materials;
 		}
+
+
 		// Extension
-		// // output["extensions"] = json();
-		// // output["extensions"]["KHR_techniques_webgl"] = json();
-		// json shaders = json::array();
-		// json programs = json::array();
-		// json techniques = json::array();
-		// // SHADER 
-		// {
-		//   for (auto& shader : model->extensions.KHR_techniques_webgl.shaders) {
-		//     json val;
-		//     val["bufferView"] = shader.bufferView;
-		//     val["type"] = shader.type;
-		//     shaders.push_back(val);
-		//   }
-		// }
-		// // PROGREAM
-		// {
-		//   for (auto& prog : model->extensions.KHR_techniques_webgl.programs) {
-		//     json val = json::parse(prog.prog_string);
-		//     programs.push_back(val);
-		//   }
-		// }
-		// // TECHNICH
-		// {
-		//   for (auto& tech : model->extensions.KHR_techniques_webgl.techniques) {
-		//     json val = json::parse(tech.tech_string);
-		//     techniques.push_back(val);
-		//   }
-		// }
-		// json KHR_techniques_webgl = json({});
-		// KHR_techniques_webgl["shaders"] = shaders;
-		// KHR_techniques_webgl["programs"] = programs;
-		// KHR_techniques_webgl["techniques"] = techniques;
-		// json extensions = json({});
-		// extensions["KHR_techniques_webgl"] = KHR_techniques_webgl;
-		// use extension
-		// if (model->extensionsUsed.size())
-		//   output["extensions"] = extensions;
+		  output["extensions"] = json();
+		  output["extensions"]["KHR_techniques_webgl"] = json();
+		 json shaders = json::array();
+		 json programs = json::array();
+		 json techniques = json::array();
+		 // SHADER 
+		 {
+		   for (auto& shader : model->extensionsJJG.KHR_techniques_webgl.shaders) {
+		     json val;
+		     val["bufferView"] = shader.bufferView;
+		     val["type"] = shader.type;
+		     shaders.push_back(val);
+		   }
+		 }
+		 // PROGREAM
+		 {
+		   for (auto& prog : model->extensionsJJG.KHR_techniques_webgl.programs) {
+		     json val = json::parse(prog.prog_string);
+		     programs.push_back(val);
+		   }
+		 }
+		 // TECHNICH
+		 {
+		   for (auto& tech : model->extensionsJJG.KHR_techniques_webgl.techniques) {
+		     json val = json::parse(tech.tech_string);
+		     techniques.push_back(val);
+		   }
+		 }
+		 json KHR_techniques_webgl = json({});
+		 KHR_techniques_webgl["shaders"] = shaders;
+		 KHR_techniques_webgl["programs"] = programs;
+		 KHR_techniques_webgl["techniques"] = techniques;
+		 json extensions = json({});
+		 extensions["KHR_techniques_webgl"] = KHR_techniques_webgl;
+		 //use extension
+		 if (model->extensionsUsed.size())
+		   output["extensions"] = extensions;
 
 		// MESHES
 		json meshes;
