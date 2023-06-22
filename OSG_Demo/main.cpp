@@ -1286,7 +1286,7 @@ bool osgb2glb_buf(std::string path, std::string& glb_buff, MeshInfo& mesh_info) 
 		}
 	}
 	model.asset.version = "2.0";
-	model.asset.generator = "fanvanzh-jjg";
+	model.asset.generator = "JIAO Jingguo"; //声明生成家
 
 	glb_buff = gltf.Serialize(&model);
 	return true;
@@ -1829,7 +1829,7 @@ int main()
 {
 	const clock_t begin_time = clock();
 	std::cout << "This is JIAO Jingguo's OSG Demo Program(------2023.5.28)!" << std::endl;
-	string inputFolder = "E:\\KY_work\\Production_3_less", outputDir = "E:\\KY_work\\Production_3-JJGTestShader2";
+	string inputFolder = "E:\\KY_work\\Production_3_less", outputDir = "E:\\KY_work\\Production_3-JJGTestShader622";
 	/*inputFolder = "E:\\KY_work\\Production_3_tiles3d"; outputDir = "E:\\KY_work\\Production_3-GLB";
 	inputFolder = "E:\\KY_work\\Production_3-GLB"; outputDir = "E:\\KY_work\\Production_3-GLTF";*/
 	if (!isDirExist(inputFolder)) return 0;
@@ -2107,6 +2107,7 @@ int main()
 	json root_json;
 	root_json["asset"]["version"] = "1.0";
 	root_json["asset"]["gltfUpAxis"] = "Z";
+	root_json["asset"]["generator"] = "JIAO Jingguo";
 	root_json["geometricError"] = 2000;
 	root_json["root"]["transform"] = trans_vec;
 	root_json["root"]["boundingVolume"]["box"] = tileset_box;
@@ -2169,6 +2170,7 @@ int main()
 		json sub_tile;
 		sub_tile["asset"]["version"] = "1.0";
 		sub_tile["asset"]["gltfUpAxis"] = "Z";
+		sub_tile["asset"]["generator"] = "JIAO Jingguo";
 		sub_tile["geometricError"] = 1000;
 		sub_tile["root"] = jg;// json_val;
 		

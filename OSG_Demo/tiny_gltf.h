@@ -8185,7 +8185,7 @@ namespace tinygltf {
 				json material;
 				SerializeGltfMaterial(model->materials[i], material);
 
-				std::cout << model->materials[i].shaderMaterial << std::endl;
+				//std::cout << model->materials[i].shaderMaterial << std::endl;
 
 				if (model->materials[i].shaderMaterial != "") //自己构造的生成纹理Shader的material By JIAO Jingguo 2023.6.20
 				{
