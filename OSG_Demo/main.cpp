@@ -37,7 +37,7 @@ using namespace std;
 #include "earcut.hpp"
 
 // By JIAO Jingguo 2023.6.1
-#include <OSGBPageLodVisitor.h>
+#include "OSGBPageLodVisitor.h"
 #include "b3dm2gltf.cpp"
 //E:\jing_zhong\osg-install\lib; E:\jing_zhong\osg-install\include;
 
@@ -1829,7 +1829,7 @@ int main()
 {
 	const clock_t begin_time = clock();
 	std::cout << "This is JIAO Jingguo's OSG Demo Program(------2023.5.28)!" << std::endl;
-	string inputFolder = "E:\\KY_work\\Production_3_less", outputDir = "E:\\KY_work\\Production_3-JJGTestShader622";
+	string inputFolder = "E:\\KY_work\\Production_3_less", outputDir = "E:\\KY_work\\Production_3-JJGTestShader701";
 	/*inputFolder = "E:\\KY_work\\Production_3_tiles3d"; outputDir = "E:\\KY_work\\Production_3-GLB";
 	inputFolder = "E:\\KY_work\\Production_3-GLB"; outputDir = "E:\\KY_work\\Production_3-GLTF";*/
 	if (!isDirExist(inputFolder)) return 0;
