@@ -30,9 +30,6 @@
     <ClCompile Include="OSGBPageLodVisitor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="b3dm2gltf.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dxt_img.h">

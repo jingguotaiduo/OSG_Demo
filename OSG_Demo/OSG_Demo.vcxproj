@@ -152,7 +152,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="b3dm2gltf.cpp" />
     <ClCompile Include="dxt_img.cpp" />
     <ClCompile Include="jjg.cpp" />
     <ClCompile Include="main.cpp" />
