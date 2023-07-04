@@ -2266,7 +2266,8 @@ bool shp23dtile(const char* filename, int layer_id, const char* dest, const char
 		node* _node = (node*)item;
 		char b3dm_file[512];
 		sprintf(b3dm_file, "%s\\tile\\%d\\%d", dest, _node->_z, _node->_x);
-		mkdirs(b3dm_file);
+		//mkdirs(b3dm_file);
+		CreateMultiLevel(b3dm_file);// By JIAO Jingguo 2023.7.4 创建目录
 		// fix the box 
 		{
 			OGREnvelope node_box;
@@ -2585,7 +2586,7 @@ std::string make_polymesh(std::vector<Polygon_Mesh>& meshes) {
 	model.asset.version = "2.0";
 	model.asset.generator = "JIAO Jingguo";
 
-	std::string buf = gltf.Serialize(&model);
+	std::string buf = gltf.Serialize_Shp(&model); // By JIAO Jingguo 2023.7.4
 	return buf;
 }
 
@@ -3039,14 +3040,122 @@ int OSGB_To_3dtiles_JJG(std::string inputFolder, std::string outputDir) // By JI
 	return 1;
 }
 
+
+// By JIAO Jingguo 2023.7.2 以下代码是进行shapefile文件转3dtiles的相关函数
+bool shape_batch_convert(std::string from, std::string to, std::string height)
+{
+	std::string source_vec = from, dest_vec = to, height_vec = height;
+	bool res = shp23dtile(source_vec.c_str(), 0, dest_vec.c_str(), height_vec.c_str());
+	std::cout << "shapefile 转 3dtiles 结束" << std::endl;// By JIAO Jingguo 2023.7.4
+	if (!res)
+		return res;
+	json tileset_json;
+	tileset_json["asset"]["version"] = "0.0";
+	tileset_json["asset"]["gltfUpAxis"] = "Z";
+	tileset_json["geometricError"] = 200;
+	tileset_json["root"]["refine"] = "REPLACE";
+
+	vector<json> childrens, regions;
+	tileset_json["root"]["boundingVolume"]["region"] = regions;//[]
+	tileset_json["root"]["geometricError"] = 200;
+	tileset_json["root"]["children"] = childrens;//[]
+
+	vector<double> root_region = { 1.0E+38, 1.0E+38, -1.0E+38, -1.0E+38, 1.0E+38, -1.0E+38 };
+	vector<json> json_vec;
+	//接下来应该是遍历文件夹下的所有 .json文件 ，生成最后的根 tileset.json文件 By JIAO Jingguo 2023.7.4
+	std::string dir = to + "\\tile", jsonSuffix = ".json";
+
+	vector<std::string> mFileNames, m_JsonFileNames;
+	getAllFiles(dir, mFileNames, jsonSuffix);
+
+	for (size_t k = 0; k < mFileNames.size(); k++)
+	{
+		string::size_type dotPos = mFileNames[k].find_last_of('.') + 1;
+		if (dotPos && mFileNames[k].substr(dotPos - 1) == jsonSuffix)
+		{
+			m_JsonFileNames.push_back(mFileNames[k]);
+		}
+	}
+
+	for (size_t t = 0; t < m_JsonFileNames.size(); t++)
+	{
+		std::cout << m_JsonFileNames[t] << std::endl;
+		std::ifstream fJson(m_JsonFileNames[t]);// 读取一个json文件，nlohmann会自动解析其中数据
+		json val = json::parse(fJson);
+		vector<json> regionSubTile = val["root"]["boundingVolume"]["region"];
+
+		for (size_t i = 0; i < root_region.size(); i++)
+		{
+			if (i == 0 || i == 1 || i == 4)
+			{
+				double val = (double)regionSubTile[i];
+				if (val < root_region[i])
+					root_region[i] = val;
+			}
+			if (i == 2 || i == 3 || i == 5)
+			{
+				double val = (double)regionSubTile[i];
+				if (val > root_region[i])
+					root_region[i] = val;
+			}
+		}
+		json_vec.push_back(val["root"]);
+	}
+	
+
+	{
+		vector<json> regionJson = tileset_json["root"]["boundingVolume"]["region"];
+		for (int i = 0; i < root_region.size(); i++)
+		{
+			json x = root_region[i];
+			regionJson.push_back(x);
+		}
+		tileset_json["root"]["boundingVolume"]["region"] = regionJson;
+	}
+	{
+		vector<json> childrenJson = tileset_json["root"]["children"];
+		for (int i = 0;i < json_vec.size(); i++)
+			childrenJson.push_back(json_vec[i]);
+		tileset_json["root"]["children"] = childrenJson;
+	}
+
+	std::string dir_dest = to;
+	std::string path_json = dir_dest + "\\tileset.json";
+	//将内容写入tileset.json文件
+	std::ofstream outRootJSON(path_json, std::ios::out | std::ios::trunc);
+	outRootJSON << std::setw(2) << tileset_json << std::endl;// std::setw(4)
+}
+
+void convert_shapefile_JJG(std::string src, std::string dest, std::string height)
+{
+	if (height == "")
+	{
+		std::cout << "you must set the height field by --height xxx" << std::endl;
+		return;
+	}
+	const clock_t startTime = clock();
+	bool ret = shape_batch_convert(src, dest, height);
+	if (!ret)
+		std::cout << "convert shapefile failed" << std::endl;
+	else
+	{
+		float snds = float(clock() - startTime) / 1000;    //最小精度到ms
+		std::cout << "task over, cost " << snds << "s" << endl;
+	}
+}
+
 int main()
 {
-	std::string inputFolder = "E:\\KY_work\\Production_3_less", outputDir = "E:\\KY_work\\Production_3-JJGTestShader702";
+	std::string inputFolder = "E:\\KY_work\\Production_3_less", outputDir = "E:\\KY_work\\Production_3-JJGTestShader705";
 	int r1 = OSGB_To_3dtiles_JJG(inputFolder, outputDir);
 	if (r1)
 		std::cout << "Successfully!" << std::endl;
 	else
 		std::cout << "Failed!" << std::endl;
+
+	std::cout << "Start converting shapefile to 3dtiles file!" << std::endl;
+	convert_shapefile_JJG("E:\\KY_work\\Output.shp", "E:\\KY_work\\shp23dtilesJJG705", "height");// 白模转换
+	std::cout << "Convert shapefile to 3dtiles ended!" << std::endl;
 	//std::string nodeFileName = "E:\\jing_zhong\\OSG_Demo\\x64\\Release\\cow.osg";// "E:\\jing_zhong\\3dtiles\\data\\test\\test.osgb";
 	//osg::ref_ptr<osg::Node> root = osgDB::readNodeFile(nodeFileName);
 	//if (!root.valid()) {
